@@ -95,8 +95,16 @@
 			$charsheet = $pheal->CharacterSheet(array('characterID' => $character->characterID));
 			$pheal->scope = "corp";
 			$corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
-			if($corpsheet->allianceID == $allianceID)
-			    $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
+                        switch ($corpOnly) {
+                            case 1:
+                                if($corpsheet->corporationID == $corpID)
+                                $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
+                                break;
+                            case 0:
+                                if($corpsheet->allianceID == $allianceID)
+                                $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
+                                break;
+                        }
 		    }
 		    if(!empty($uname_array)){
 			echo "<tr>
