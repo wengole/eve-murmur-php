@@ -14,6 +14,12 @@
     // Pheal cache path
     $pheal_cache = '/home/rsm/.pheal/cache';
 
+    // Corp or Alliance?
+    $corpOnly = 0;
+
+    // Corp ID to check
+    $corpID = "";
+
     // Alliance ID to check
     $allianceID = "905861359";
 ?>
