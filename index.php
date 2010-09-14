@@ -98,11 +98,11 @@
                         switch ($corpOnly) {
                             case 1:
                                 if($corpsheet->corporationID == $corpID)
-                                $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
+                                    $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
                                 break;
-                            case 0:
+                            default:
                                 if($corpsheet->allianceID == $allianceID)
-                                $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
+                                    $uname_array[] = "[".$corpsheet->ticker."]"." ".$character->name;
                                 break;
                         }
 		    }
@@ -116,9 +116,16 @@
 			echo "</select></td>";
 		    } else {
 			// TODO: Change hardcoded "BricK" to be the corp/allaince name as set in config.php
-                        echo '<tr>
-				<td colspan=2 align="center"><font color="red">No BricK characters on account!</font></td>
-			      </tr>';
+                        echo '<tr>';
+                        switch ($corpOnly) {
+                            case 1:
+                                "<td colspan=2 align='center'><font color='red'>No characters in $corpsheet->corporationName on account!</font></td>";
+                                break;
+                            default:
+                                "<td colspan=2 align='center'><font color='red'>No characters in $corpsheet->allianceName on account!</font></td>";
+                                break;
+                        }
+			      '</tr>';
 		    }
 		}
 		if(isset($_POST['username']) || $_POST['password'] != $_POST['password2']) {
