@@ -66,18 +66,13 @@
                 echo "<h3>Failed to add registration</h3>";
             }
         } else {
-            // Why are we doing this? It's breaking things
-            if (isset($_POST['userid']))
-                $userID = $_POST['userid'];
-            if (isset($_POST['apikey']))
-                $apiKey = $_POST['apikey'];
-            echo "<div id='apicontent'>
-		<form method='POST'>
+            echo '<div id="apicontent">
+		<form method="POST">
 			<h1>Mumble Registration</h1>
 			<p>User ID:</p>
-			<input type = 'text' id='useridinput' name='userid' value='$userID'>
+			<input type = "text" id="useridinput" name="userid" value="' . $_POST['userid'] . '">
 			<p>Limited API:</p>
-			<input type = 'text' id='apiinput' name='apikey' value='$apiKey'>";
+			<input type = "text" id="apiinput" name="apikey" value="' . $_POST['apikey'] . '">';
 
             // Create Pheal instance to grab characters on account
             // Loop through characters and output required info
@@ -138,7 +133,8 @@
 				<img src='images/apply2.png' alt=''/>
 				Submit
 				</button>
-			</div>";
+			</div>
+                        </form>";
         }
         ?>
     </body>
