@@ -1,7 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+        <link href='apipagecss.css' rel='stylesheet' type='text/css'>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
@@ -43,7 +44,7 @@
             } catch (Murmur_InvalidSecretException $exc) {
                 echo 'Wrong ICE secret.<br />';
             } catch (Murmur_InvalidUserException $exc) {
-                echo 'Username already exists.<br />';
+                echo "<h3>Username already exists</h3>";
             }
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
@@ -59,10 +60,10 @@
                         $charid . "," . $charsheet->corporationID . "," . $corpsheet->allianceID . ")
 			ON DUPLICATE KEY UPDATE eveCharID = $charid, eveCorpID = $charsheet->corporationID, eveAllyID = $corpsheet->allianceID";
                 if (!mysql_query($qry, $conn)) {
-                    echo 'Failed to INSERT into database.<br />';
+                    echo "<h3>Failed to INSERT into database.</h3>";
                 }
             } else {
-                echo 'Failed to add registration.<br />';
+                echo "<h3>Failed to add registration</h3>";
             }
         } else {
             // Why are we doing this? It's breaking things
@@ -70,16 +71,13 @@
                 $userID = $_POST['userid'];
             if (isset($_POST['apikey']))
                 $apiKey = $_POST['apikey'];
-            // Grab API Key from <form>
-            echo "<form method='POST'>
-			<table border='0'>
-			    <tr>
-				<td>UserID:</td>
-				<td><input type='text' name='userid' value='$userID' size='12' /></td>
-			    </tr>
-			    <tr>
-				<td>API Key:</td>
-				<td><input type='text' name='apikey' value='$apiKey' size='12' /></td>";
+            echo "<div id='apicontent'>
+		<form method='POST'>
+			<h1>Mumble Registration</h1>
+			<p>User ID:</p>
+			<input type = 'text' id='useridinput' name='userid' value='$userID'>
+			<p>Limited API:</p>
+			<input type = 'text' id='apiinput' name='apikey' value='$apiKey'>";
 
             // Create Pheal instance to grab characters on account
             // Loop through characters and output required info
@@ -106,47 +104,41 @@
                     }
                 }
                 if (!empty($uname_array)) {
-                    echo "<tr>
-				<td>Pick user:</td>
-				<td><select name='username'>";
+                    echo "<p>Pick User:</p>
+			<select id='userselect' name='username'>";
                     foreach ($uname_array as $username) {
                         echo "<option>$username";
                     }
-                    echo "</select></td>";
+                    echo "</select>";
                 } else {
-                    echo '<tr>';
                     switch ($corpOnly) {
                         case 1:
                             $pheal->scope = "eve";
                             $corpName = $pheal->CharacterName(array("ids" => $corpID));
-                            "<td colspan=2 align='center'><font color='red'>No characters in $corpName on account!</font></td>";
+                            "<h3>No characters in $corpNam on account!</h3>";
                             break;
                         default:
                             $pheal->scope = "eve";
                             $allyName = $pheal->CharacterName(array("ids" => $allianceID));
-                            "<td colspan=2 align='center'><font color='red'>No characters in $allyName on account!</font></td>";
+                            "<h3>No characters in $allyName on account!</h3>";
                             break;
                     }
-                    '</tr>';
                 }
             }
             if (isset($_POST['username']) || $_POST['password'] != $_POST['password2']) {
+                echo "<p>Password:</p>
+                        <input type = 'password' id = 'passwordinput' name = 'password' value = ''>";
+                echo "<p>Confirm:</p>
+                        <input type = 'password' id = 'confirminput' name = 'password2' value = ''>";
                 if ($_POST['password'] != $_POST['password2'])
-                    echo '<tr>
-				<td colspan=2 align="center"><font color="red">Passwords do not match</font></td>
-			      </tr>';
-                echo '<tr>
-			    <td>Password:</td>
-			    <td><input type="password" name="password" value="" size="12" /></td>
-			  </tr>';
-                echo '<tr>
-			    <td>Confirm:</td>
-			    <td><input type="password" name="password2" value="" size="12" /></td>
-			  </tr>';
+                    echo "<h3>Passwords do not match</h3>";
             }
-            echo "<tr>
-			<td colspan=2 align='center'><input type='submit' value='Submit' /></td>
-		    </form>";
+            echo "<div class='buttons'>
+				<button type='submit' class='positive' name='save' value='Submit'>
+				<img src='images/apply2.png' alt=''/>
+				Submit
+				</button>
+			</div>";
         }
         ?>
     </body>
