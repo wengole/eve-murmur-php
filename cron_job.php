@@ -27,8 +27,27 @@
         $result = mysql_query($query);
         while($row = mysql_fetch_array($result)){
             $pheal = new Pheal($row['eveUserID'], $row['eveApiKey'], 'corp');
-            $pheal->CorporationSheet(array('corporationID' => $row['eveCorpID']));
-            echo $user.' '.$row['eveUserID'].' '.$row['eveApiKey'];
+            $corpsheet = $pheal->CorporationSheet(array('corporationID' => $row['eveCorpID']));
+            $query = "UPDATE users SET eveCorpID = $corpsheet->corporationID,
+                    eveAllyID = $corpsheet->allianceID";
+            if(!mysql_query($query))
+                echo "Failed to update user! $query";
+            echo $user."\n".$corpsheet->corporationName."\n".$corpsheet->allianceName."\n".
+                    "Remove?: ";
+            switch ($corpOnly) {
+                case true:
+                    if(!$corpsheet->corporationID == $corpID)
+                        echo "Yes\n\n";
+                    else
+                        echo "No\n\n";
+                    break;
+                default:
+                    if(!$corpsheet->allianceID == $allianceID)
+                        echo "Yes\n\n";
+                    else
+                        echo "No\n\n";
+                    break;
+            }
         }
     }
 ?>

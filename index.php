@@ -65,12 +65,13 @@
                     echo 'Failed to add registration.<br />';
                 }
 	    } else {
-		// Grab API Key from <form>
+		// Why are we doing this? It's breaking things
 		if(isset($_POST['userid']))
 			$userID = $_POST['userid'];
 		if(isset($_POST['apikey']))
 			$apiKey = $_POST['apikey'];
-		echo "<form method='POST'>
+		// Grab API Key from <form>
+                echo "<form method='POST'>
 			<table border='0'>
 			    <tr>
 				<td>UserID:</td>
@@ -87,8 +88,6 @@
 		if(isset($userID) && isset($apiKey)) {
 		    $pheal = new Pheal($userID, $apiKey);
 		    $characters = $pheal->Characters();
-
-		    // TODO: Add toggle for alliance/corp to config and change check accordingly
 		    $uname_array = array();
 		    foreach($characters->characters as $character) {
 			$pheal->scope = "char";
@@ -115,14 +114,17 @@
 			}
 			echo "</select></td>";
 		    } else {
-			// TODO: Change hardcoded "BricK" to be the corp/allaince name as set in config.php
                         echo '<tr>';
                         switch ($corpOnly) {
                             case 1:
-                                "<td colspan=2 align='center'><font color='red'>No characters in $corpsheet->corporationName on account!</font></td>";
+                                $pheal->scope = "eve";
+                                $corpName = $pheal->CharacterName(array("ids" => $corpID));
+                                "<td colspan=2 align='center'><font color='red'>No characters in $corpName on account!</font></td>";
                                 break;
                             default:
-                                "<td colspan=2 align='center'><font color='red'>No characters in $corpsheet->allianceName on account!</font></td>";
+                                $pheal->scope = "eve";
+                                $allyName = $pheal->CharacterName(array("ids" => $allianceID));
+                                "<td colspan=2 align='center'><font color='red'>No characters in $allyName on account!</font></td>";
                                 break;
                         }
 			      '</tr>';
