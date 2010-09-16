@@ -1,25 +1,26 @@
 <?php
-    //MySQL Settings
-    $mysql_user = 'rsm';
-    $mysql_pass = 'RSMAdm1n';
-    $mysql_host = 'localhost';
-    $mysql_db   = 'murmur';
 
-    // ICE proxy
-    $ice_proxy = 'Meta:tcp -h 127.0.0.1 -p 6502';
+//MySQL Settings
+$mysql_user = 'rsm';
+$mysql_pass = 'RSMAdm1n';
+$mysql_host = 'localhost';
+$mysql_db = 'murmur';
 
-    // Server ID to connect to
-    $vserverid = 4;
+// ICE proxy
+$ice_proxy = 'Meta:tcp -h 127.0.0.1 -p 6502';
 
-    // Pheal cache path
-    $pheal_cache = '/home/rsm/.pheal/cache';
+// Server ID to connect to
+$vserverid = 4;
 
-    // Corp or Alliance?
-    $corpOnly = false;
+// Pheal cache path
+$pheal_cache = '/home/rsm/.pheal/cache';
 
-    // Corp ID to check
-    $corpID = "";
+// Corp or Alliance?
+$corpOnly = false;
 
-    // Alliance ID to check
-    $allianceID = "905861359";
+// Corp ID to check
+$corpID = "";
+
+// Alliance ID to check
+$allianceID = "905861359";
 ?>
