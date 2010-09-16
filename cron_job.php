@@ -22,30 +22,13 @@
 
     // Get array of registered users on Murmur server
     $reg_users = $server->getRegisteredUsers('');
-    var_dump($reg_users);
     foreach ($reg_users as $key => $user) {
         $query = "SELECT * FROM users WHERE murmurUserID = $key";
         $result = mysql_query($query);
         while($row = mysql_fetch_array($result)){
+            $pheal = new Pheal($row['eveUserID'], $row['eveApiKey'], 'corp');
+            $pheal->CorporationSheet(array('corporationID' => $row['eveCorpID']));
             echo $user.' '.$row['eveUserID'].' '.$row['eveApiKey'];
         }
     }
-//    // Get array of registered API users from database
-//    $qry = 'SELECT murmurUserID, eveUserID, eveApiKey from users;';
-//    $result = mysql_query($qry);
-//    while($row = mysql_fetch_assoc($result)) {
-//        $pheal = new Pheal($row['eveUserID'], $row['eveApiKey'], "eve");
-//        $murmurUserID = array((int)$row['murmurUserID']);
-//        $charname = $server->getUserNames($murmurUserID);
-//        $charname = substr($charname[$row['murmurUserID']], strpos($charname[$row['murmurUserID']], " ") + 1);
-//        $charid = $pheal->CharacterID(array('names' => $charname));
-//        $charid = $charid->characters[0]['characterID'];
-//        $pheal->scope = "char";
-//	$charsheet = $pheal->CharacterSheet(array('characterID' => $charid));
-//	$pheal->scope = "corp";
-//	$corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
-//        echo "Character: ".$charname."\n";
-//        echo "Corporation ID: ".$charsheet->corporationID."\n";
-//        echo "Alliance ID: ".$corpsheet->allianceID."\n";
-//    }
 ?>
