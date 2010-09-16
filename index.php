@@ -78,8 +78,8 @@
             // Loop through characters and output required info
             // Verify characters are in Brick before proceeding
             // Output info as <select><option>'s
-            if (isset($userID) && isset($apiKey)) {
-                $pheal = new Pheal($userID, $apiKey);
+            if (isset($_POST['userid']) && isset($_POST['apikey'])) {
+                $pheal = new Pheal($_POST['userid'], $_POST['apikey']);
                 $characters = $pheal->Characters();
                 $uname_array = array();
                 foreach ($characters->characters as $character) {
