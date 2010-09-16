@@ -15,7 +15,7 @@
     $pheal_cache = '/home/rsm/.pheal/cache';
 
     // Corp or Alliance?
-    $corpOnly = 0;
+    $corpOnly = false;
 
     // Corp ID to check
     $corpID = "";
