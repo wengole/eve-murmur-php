@@ -47,7 +47,7 @@
             } catch (Murmur_InvalidUserException $exc) {
                 $jsText="<h4>Username already exists</h4>";
             }
-            echo "append_overlay($jsText)";
+            echo "show_overlay($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
@@ -139,5 +139,6 @@
                         </form>";
         }
         ?>
+        <a href="#" class="show-overlay">Test Overlay</a>
     </body>
 </html>
