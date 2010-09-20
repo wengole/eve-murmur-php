@@ -3,6 +3,8 @@
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
         <link href='apipagecss.css' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+        <script type="text/javascript" src="js/overlay.js"></script>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
