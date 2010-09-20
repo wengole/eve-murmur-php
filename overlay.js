@@ -1,8 +1,8 @@
 var $overlay_wrapper;
 var $overlay_panel;
 
-function show_overlay() {
-    if ( !$overlay_wrapper ) append_overlay();
+function show_overlay(str) {
+    if ( !$overlay_wrapper ) append_overlay(str);
     $overlay_wrapper.fadeIn(700);
 }
 
