@@ -43,7 +43,7 @@
             } catch (Murmur_ServerBootedException $exc) {
                 echo "<h3>Server not running.</h3>";
             } catch (Murmur_InvalidSecretException $exc) {
-                echo "<h3Wrong ICE secret.</h3>";
+                echo "<h3>Wrong ICE secret.</h3>";
             } catch (Murmur_InvalidUserException $exc) {
                 echo "<h3>Username already exists</h3>";
             }
