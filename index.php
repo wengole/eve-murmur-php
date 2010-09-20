@@ -38,7 +38,8 @@
                 $murmur_userid = $server->registerUser($userinfo);
                 echo 'Successfully registered ' . $_POST['username'] . '<br />
                           Please connect to: ' . $server->getConf('host') . '<br />
-                          Port: ' . $server->getConf('port') . '<br />';
+                          Port: ' . $server->getConf('port') . '<br />
+                          or click <a href="mumble://'.str_replace(" ", "%20", $_POST['username']).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.0">here</a><br />';
             } catch (Murmur_ServerBootedException $exc) {
                 echo "<h3>Server not running.</h3>";
             } catch (Murmur_InvalidSecretException $exc) {
