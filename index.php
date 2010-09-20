@@ -40,9 +40,9 @@
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />';
             } catch (Murmur_ServerBootedException $exc) {
-                echo 'Server not running.<br />';
+                echo "<h3>Server not running.</h3>";
             } catch (Murmur_InvalidSecretException $exc) {
-                echo 'Wrong ICE secret.<br />';
+                echo "<h3Wrong ICE secret.</h3>";
             } catch (Murmur_InvalidUserException $exc) {
                 echo "<h3>Username already exists</h3>";
             }
