@@ -34,19 +34,20 @@
             $server = $meta->getServer($vserverid);
             // Build userInfo array encrypting the password before giving it to murmur
             $userinfo = array($_POST['username'], null, null, null, sha1($_POST['password']));
-            try {
-                $murmur_userid = $server->registerUser($userinfo);
-                echo 'Successfully registered ' . $_POST['username'] . '<br />
+              try {
+                 $murmur_userid = $server->registerUser($userinfo);
+                 $jsText='Successfully registered ' . $_POST['username'] . '<br />
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />
                           or click <a href="mumble://'.str_replace(" ", "%20", $_POST['username']).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.0">here</a><br />';
             } catch (Murmur_ServerBootedException $exc) {
-                echo "<h3>Server not running.</h3>";
+                $jsText="<h4>Server not running.</h4>";
             } catch (Murmur_InvalidSecretException $exc) {
-                echo "<h3>Wrong ICE secret.</h3>";
+                $jsText="<h4>  Wrong ICE secret.</h4>";
             } catch (Murmur_InvalidUserException $exc) {
-                echo "<h3>Username already exists</h3>";
+                $jsText="<h4>Username already exists</h4>";
             }
+            echo "append_overlay($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
