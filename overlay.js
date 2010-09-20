@@ -1,8 +1,12 @@
 var $overlay_wrapper;
 var $overlay_panel;
 
-function show_overlay(str) {
-    if ( !$overlay_wrapper ) append_overlay(str);
+function show_overlay_test() {
+    if ( !$overlay_wrapper ) append_overlay();
+    $overlay_wrapper.fadeIn(700);
+}
+function show_overlay() {
+    if ( !$overlay_wrapper ) append_overlay();
     $overlay_wrapper.fadeIn(700);
 }
 
@@ -10,11 +14,10 @@ function hide_overlay() {
     $overlay_wrapper.fadeOut(500);
 }
 
-function append_overlay(str) {
+function append_overlay() {
     $overlay_wrapper = $('<div id="overlay"></div>').appendTo( $('BODY') );
     $overlay_panel = $('<div id="overlay-panel"></div>').appendTo( $overlay_wrapper );
-
-    $overlay_panel.html( str );
+    $overlay_panel.html(  '<p>This is the overlay content</p><a href="#" class="hide-overlay">Close Overlay</a>'  );
 
     attach_overlay_events();
 }
