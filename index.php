@@ -3,6 +3,8 @@
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
         <link href='apipagecss.css' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+        <script type="text/javascript" src="js/overlay.js"></script>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
@@ -22,7 +24,7 @@
         mysql_select_db($mysql_db, $conn);
 
         // We have all requirements, register the user
-        if (isset($_POST['password']) && $_POST['password'] == $_POST['password2']) {
+        if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2']) {
             //Intialise ICE
             $initData = new Ice_InitializationData;
             $initData->properties = Ice_createProperties();
@@ -34,19 +36,20 @@
             $server = $meta->getServer($vserverid);
             // Build userInfo array encrypting the password before giving it to murmur
             $userinfo = array($_POST['username'], null, null, null, sha1($_POST['password']));
-            try {
-                $murmur_userid = $server->registerUser($userinfo);
-                echo 'Successfully registered ' . $_POST['username'] . '<br />
+              try {
+                 $murmur_userid = $server->registerUser($userinfo);
+                 $jsText='Successfully registered ' . $_POST['username'] . '<br />
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />
                           or click <a href="mumble://'.str_replace(" ", "%20", $_POST['username']).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.0">here</a><br />';
             } catch (Murmur_ServerBootedException $exc) {
-                echo "<h3>Server not running.</h3>";
+                $jsText="<h4>Server not running.</h4>";
             } catch (Murmur_InvalidSecretException $exc) {
-                echo "<h3Wrong ICE secret.</h3>";
+                $jsText="<h4>  Wrong ICE secret.</h4>";
             } catch (Murmur_InvalidUserException $exc) {
-                echo "<h3>Username already exists</h3>";
+                $jsText="<h4>Username already exists</h4>";
             }
+            echo "show_overlay($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
@@ -71,9 +74,15 @@
 		<form method="POST">
 			<h1>Mumble Registration</h1>
 			<p>User ID:</p>
-			<input type = "text" id="useridinput" name="userid" value="' . $_POST['userid'] . '">
+			<input type = "text" id="useridinput" name="userid" value="';
+            if (isset($_POST['userid']))
+                echo $_POST['userid'];
+            echo '">
 			<p>Limited API:</p>
-			<input type = "text" id="apiinput" name="apikey" value="' . $_POST['apikey'] . '">';
+			<input type = "text" id="apiinput" name="apikey" value="';
+            if (isset($_POST['apikey']))
+                    echo $_POST['apikey'];
+            echo '">';
 
             // Create Pheal instance to grab characters on account
             // Loop through characters and output required info
@@ -81,7 +90,13 @@
             // Output info as <select><option>'s
             if (isset($_POST['userid']) && isset($_POST['apikey'])) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey']);
-                $characters = $pheal->Characters();
+                // On API errors switch to using cache files only
+                try {
+                    $characters = $pheal->Characters();
+                } catch (Exception $exc) {
+                    PhealConfig::getInstance()->cache = new PhealFileCacheForced($pheal_cache);
+                    $characters = $pheal->Characters();
+                }
                 $uname_array = array();
                 foreach ($characters->characters as $character) {
                     $pheal->scope = "char";
@@ -121,13 +136,14 @@
                     }
                 }
             }
-            if (isset($_POST['username']) || $_POST['password'] != $_POST['password2']) {
+            if (isset($_POST['username']) || (isset($_POST['password']) && isset($_POST['password2']))) {
                 echo "<p>Password:</p>
                         <input type = 'password' id = 'passwordinput' name = 'password' value = ''>";
                 echo "<p>Confirm:</p>
                         <input type = 'password' id = 'confirminput' name = 'password2' value = ''>";
-                if ($_POST['password'] != $_POST['password2'])
-                    echo "<h3>Passwords do not match</h3>";
+                if (isset($_POST['password']) && isset($_POST['password2']))
+                        if ($_POST['password'] != $_POST['password2'])
+                            echo "<h3>Passwords do not match</h3>";
             }
             echo "<div class='buttons'>
 				<button type='submit' class='positive' name='save' value='Submit'>
@@ -138,5 +154,6 @@
                         </form>";
         }
         ?>
+        <a href="#" class="show-overlay">Test Overlay</a>
     </body>
 </html>
