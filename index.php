@@ -41,7 +41,7 @@
                  $jsText='Successfully registered ' . $_POST['username'] . '<br />
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />
-                          or click <a href="mumble://'.str_replace(" ", "%20", $_POST['username']).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.0">here</a><br />';
+                          or click <a href="mumble://'.str_replace(".", "%2E", rawurlencode($_POST['username'])).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.2">here</a><br />';
             } catch (Murmur_ServerBootedException $exc) {
                 $jsText="<h4>Server not running.</h4>";
             } catch (Murmur_InvalidSecretException $exc) {
@@ -107,11 +107,11 @@
                     switch ($corpOnly) {
                         case 1:
                             if ($corpsheet->corporationID == $corpID)
-                                $uname_array[] = "[" . $corpsheet->ticker . "]" . " " . $character->name;
+                                $uname_array[] = $character->name;
                             break;
                         default:
                             if ($corpsheet->allianceID == $allianceID)
-                                $uname_array[] = "[" . $corpsheet->ticker . "]" . " " . $character->name;
+                                $uname_array[] = $character->name;
                             break;
                     }
                 }
