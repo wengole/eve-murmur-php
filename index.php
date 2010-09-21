@@ -45,7 +45,7 @@
             } catch (Murmur_ServerBootedException $exc) {
                 $jsText="<h4>Server not running.</h4>";
             } catch (Murmur_InvalidSecretException $exc) {
-                $jsText="<h4>  Wrong ICE secret.</h4>";
+                $jsText="<h4>Wrong ICE secret.</h4>";
             } catch (Murmur_InvalidUserException $exc) {
                 $jsText="<h4>Username already exists</h4>";
             }
