@@ -60,7 +60,8 @@
                 $charsheet = $pheal->CharacterSheet(array('characterID' => $charid));
                 $pheal->scope = "corp";
                 $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
-                $qry = "INSERT INTO users VALUES (" . $murmur_userid . "," . $_POST['userid'] . ",'" . $_POST['apikey'] . "'," .
+                $qry = "INSERT INTO users (`murmurUserID`, `eveUserID`, `eveApiKey`, `eveCharID`, `eveCorpID`, `eveAllyID`)
+                        VALUES (" . $murmur_userid . "," . $_POST['userid'] . ",'" . $_POST['apikey'] . "'," .
                         $charid . "," . $charsheet->corporationID . "," . $corpsheet->allianceID . ")
 			ON DUPLICATE KEY UPDATE eveCharID = $charid, eveCorpID = $charsheet->corporationID, eveAllyID = $corpsheet->allianceID";
                 if (!mysql_query($qry, $conn)) {
