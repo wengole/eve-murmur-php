@@ -34,8 +34,9 @@
             $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($ice_proxy));
             // Select virtual server
             $server = $meta->getServer($vserverid);
-            // Build userInfo array encrypting the password before giving it to murmur
-            $userinfo = array($_POST['username'], null, null, null, sha1($_POST['password']));
+            // Build userInfo array
+            // Encrypting password doesn't work
+            $userinfo = array($_POST['username'], null, null, null, $_POST['password']);
               try {
                  $murmur_userid = $server->registerUser($userinfo);
                  $jsText='Successfully registered ' . $_POST['username'] . '<br />
