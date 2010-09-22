@@ -117,7 +117,7 @@
                     }
                 }
                 if (!empty($uname_array)) {
-                    echo "<p>Pick User:</p>
+                    echo "<p>Pick Character:</p>
 			<select id='userselect' name='username'>";
                     foreach ($uname_array as $username) {
                         echo "<option>$username";
