@@ -55,8 +55,7 @@
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
-                $charname = substr($_POST['username'], strpos($_POST['username'], " ") + 1);
-                $charid = $pheal->CharacterID(array('names' => $charname));
+                $charid = $pheal->CharacterID(array('names' => $_POST['username']));
                 $charid = $charid->characters[0]['characterID'];
                 $pheal->scope = "char";
                 $charsheet = $pheal->CharacterSheet(array('characterID' => $charid));
