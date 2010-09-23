@@ -24,7 +24,8 @@
         mysql_select_db($mysql_db, $conn);
 
         // We have all requirements, register the user
-        if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2']) {
+        if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2'] 
+                && preg_match_all("/^[A-Za-z0-9-._]*\z/", $_POST['password'])) {
             //Intialise ICE
             $initData = new Ice_InitializationData;
             $initData->properties = Ice_createProperties();
