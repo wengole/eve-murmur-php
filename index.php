@@ -25,7 +25,7 @@
 
         // We have all requirements, register the user
         if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2'] 
-                && preg_match_all("/^[A-Za-z0-9-._]*\z/", $_POST['password'])) {
+                && preg_match("/^[A-Za-z0-9-._]*\z/", $_POST['password'])) {
             //Intialise ICE
             $initData = new Ice_InitializationData;
             $initData->properties = Ice_createProperties();
@@ -145,8 +145,11 @@
                 echo "<p>Confirm:</p>
                         <input type = 'password' id = 'confirminput' name = 'password2' value = ''>";
                 if (isset($_POST['password']) && isset($_POST['password2']))
-                        if ($_POST['password'] != $_POST['password2'])
+                        if ($_POST['password'] != $_POST['password2']) {
                             echo "<h3>Passwords do not match</h3>";
+                        } elseif (preg_match("/^[A-Za-z0-9-._]*\z/", $_POST['password']) == 0) {
+                            echo "<h3>Only letters, numbers - . _ allowed</h3>";
+                        }
             }
             echo "<div class='buttons'>
 				<button type='submit' class='positive' name='save' value='Submit'>
