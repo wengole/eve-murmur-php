@@ -99,21 +99,39 @@ font,th,td,p,a,div
 }
 
 #overlay {
-    width: 100%;
-    min-height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    background: url('images/overlaywhite.png') repeat 0 0;
-    display: none;
-    text-align: center;
+        background:transparent url(images/overlay.png) repeat top left;
+        position:fixed;
+        top:0px;
+        bottom:0px;
+        left:0px;
+        right:0px;
+        z-index:100;
 }
 
-#overlay-panel{
-    margin: 10% auto 0 auto;
-    width: 35px;
-    background: #FFF;
+#box {
+    position:fixed;
+    top:-200px;
+    left:30%;
+    right:30%;
+    background-color:#fff;
+    color:#7F7F7F;
+    padding:20px;
+    border:2px solid #ccc;
+    -moz-border-radius: 20px;
+    -webkit-border-radius:20px;
+    -khtml-border-radius:20px;
+    -moz-box-shadow: 0 1px 5px #333;
+    -webkit-box-shadow: 0 1px 5px #333;
+    z-index:101;
+}
+
+a.boxclose{
+    float:right;
+    width:26px;
+    background:transparent url(images/cancel.png) repeat top left;
+    margin-top: -30px;
+    margin-right: -30px;
+    cursor: pointer;
 }
 #passwordinput{
     	width: 100%;
