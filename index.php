@@ -2,11 +2,24 @@
 <html>
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
-        <link href='apipagecss.css' rel='stylesheet' type='text/css'>
+        <link href='apipagecss2.css' rel='stylesheet' type='text/css'>
         <script type="text/javascript" src="js/functions.js"></script>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
+            <div id="overlay" style="display: none;"></div>
+
+            <div id="success_box"style="display: none;">
+                    <a href="javascript:close();">X</a>
+                    <h1>Success!</h1>
+                    <p id="sContent"></p>
+            </div>
+
+            <div id="fail_box"style="display: none;">
+                    <a href="javascript:close();">X</a>
+                    <h1>Error!</h1>
+                    <p id="fContent"></p>
+            </div>
         <?php
         //TODO: Move logic to separate PHP class
         require_once 'config.php';
@@ -41,14 +54,30 @@
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />
                           or click <a href="mumble://'.str_replace(" ", "%20", $_POST['username']).':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.0">here</a><br />';
+                 $checker=0;
             } catch (Murmur_ServerBootedException $exc) {
-                $jsText="<h4>Server not running.</h4>";
+                $jsText="Server not running.";
+                $checker=1;
             } catch (Murmur_InvalidSecretException $exc) {
-                $jsText="<h4>  Wrong ICE secret.</h4>";
+                $jsText="Wrong ICE secret.";
+                $checker=1;
             } catch (Murmur_InvalidUserException $exc) {
-                $jsText="<h4>Username already exists</h4>";
+                $jsText="Username already exists";
+                $checker=1;
             }
-            echo "show_overlay($jsText)";
+            switch ($checker) {
+                case "0" :
+                    echo "display_success($jsText)";
+                    break;
+
+                case "1" :
+                    echo "display_fail($jsText)";
+                    break;
+
+                default:
+                    break;
+            }
+            echo "display_success($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
@@ -140,6 +169,5 @@
                         </form>";
         }
         ?>
-        <a href="#" class="show-overlay">Test Overlay</a>
     </body>
 </html>
