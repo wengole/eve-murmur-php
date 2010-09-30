@@ -2,8 +2,8 @@
 <html>
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
-        <link href='apipagecss2.css' rel='stylesheet' type='text/css'>
-        <script type="text/javascript" src="js/functions.js"></script>
+        <link href='apipagecssr2.css' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="functions.js"></script>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
@@ -67,17 +67,16 @@
             }
             switch ($checker) {
                 case "0" :
-                    echo "display_success($jsText)";
+                    echo "<script language='javascript'>display_success('$jsText')</script>";
                     break;
 
                 case "1" :
-                    echo "display_fail($jsText)";
+                    echo "<script language='javascript'>display_failure('$jsText')</script>";
                     break;
 
                 default:
                     break;
             }
-            echo "display_success($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
@@ -92,10 +91,9 @@
                         $charid . "," . $charsheet->corporationID . "," . $corpsheet->allianceID . ")
 			ON DUPLICATE KEY UPDATE eveCharID = $charid, eveCorpID = $charsheet->corporationID, eveAllyID = $corpsheet->allianceID";
                 if (!mysql_query($qry, $conn)) {
-                    echo "<h3>Failed to INSERT into database.</h3>";
+                    $jsText = "Failed to INSERT into database.";
+                    echo "<script language='javascript'>display_failure('$jsText')</script>";
                 }
-            } else {
-                echo "<h3>Failed to add registration</h3>";
             }
         } else {
             echo '<div id="apicontent">
