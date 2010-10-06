@@ -23,4 +23,9 @@ $corpID = "";
 
 // Alliance ID to check
 $allianceID = "905861359";
+
+// Permanent member Full API for "blue" list
+$blueUserID = "258577";
+$blueApiKey = "y1AJBch3LQfLZ0C2lZBM9uFcmN7VdgNWbDbrXMA22nHd07l6pUticAwbIDMmzkjg";
+$blueCharID = "1310826886";
 ?>
