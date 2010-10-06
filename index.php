@@ -174,12 +174,14 @@
                         case 1:
                             $pheal->scope = "eve";
                             $corpName = $pheal->CharacterName(array("ids" => $corpID));
-                            "<h3>No characters in $corpNam on account!</h3>";
+                            $corpName = $corpName->characters[0]['name'];
+                            echo "<h3>No characters in $corpName on account!</h3>";
                             break;
                         default:
                             $pheal->scope = "eve";
                             $allyName = $pheal->CharacterName(array("ids" => $allianceID));
-                            "<h3>No characters in $allyName on account!</h3>";
+                            $allyName = $allyName->characters[0]['name'];
+                            echo "<h3>No characters in $allyName on account!</h3>";
                             break;
                     }
                 }
