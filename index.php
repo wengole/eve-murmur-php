@@ -2,12 +2,24 @@
 <html>
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
-        <link href='apipagecss.css' rel='stylesheet' type='text/css'>
-        <script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
-        <script type="text/javascript" src="js/overlay.js"></script>
+        <link href='apipagecssr2.css' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="functions.js"></script>
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
+            <div id="overlay" style="display: none;"></div>
+
+            <div id="success_box"style="display: none;">
+                    <a href="javascript:close();">X</a>
+                    <h1>Success!</h1>
+                    <p id="sContent"></p>
+            </div>
+
+            <div id="fail_box"style="display: none;">
+                    <a href="javascript:close();">X</a>
+                    <h1>Error!</h1>
+                    <p id="fContent"></p>
+            </div>
         <?php
         //TODO: Move logic to separate PHP class
         require_once 'config.php';
@@ -51,6 +63,28 @@
                 $jsText="<h4>Wrong ICE secret.</h4>";
             } catch (Murmur_InvalidUserException $exc) {
                 $jsText="<h4>Username already exists</h4>";
+                 $checker=0;
+            } catch (Murmur_ServerBootedException $exc) {
+                $jsText="Server not running.";
+                $checker=1;
+            } catch (Murmur_InvalidSecretException $exc) {
+                $jsText="Wrong ICE secret.";
+                $checker=1;
+            } catch (Murmur_InvalidUserException $exc) {
+                $jsText="Username already exists";
+                $checker=1;
+            }
+            switch ($checker) {
+                case "0" :
+                    echo "<script language='javascript'>display_success('$jsText')</script>";
+                    break;
+
+                case "1" :
+                    echo "<script language='javascript'>display_failure('$jsText')</script>";
+                    break;
+
+                default:
+                    break;
             }
             echo "show_overlay($jsText)";
             // Save API and returned userID to MySQL database for later cron use
@@ -67,10 +101,9 @@
                         $charid . "," . $charsheet->corporationID . "," . $corpsheet->allianceID . ")
 			ON DUPLICATE KEY UPDATE eveCharID = $charid, eveCorpID = $charsheet->corporationID, eveAllyID = $corpsheet->allianceID";
                 if (!mysql_query($qry, $conn)) {
-                    echo "<h3>Failed to INSERT into database.</h3>";
+                    $jsText = "Failed to INSERT into database.";
+                    echo "<script language='javascript'>display_failure('$jsText')</script>";
                 }
-            } else {
-                echo "<h3>Failed to add registration</h3>";
             }
         } else {
             echo '<div id="apicontent">
