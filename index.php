@@ -86,6 +86,18 @@
                 default:
                     break;
             }
+            switch ($checker) {
+                case "0" :
+                    echo "<script language='javascript'>display_success('$jsText')</script>";
+                    break;
+
+                case "1" :
+                    echo "<script language='javascript'>display_failure('$jsText')</script>";
+                    break;
+
+                default:
+                    break;
+            }
             echo "show_overlay($jsText)";
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
