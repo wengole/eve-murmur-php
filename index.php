@@ -152,7 +152,7 @@
                     $pheal->scope = "corp";
                     $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
                     switch ($corpOnly) {
-                        case 1:
+                        case true:
                             if ($corpsheet->corporationID == $corpID)
                                 $uname_array[] = $character->name;
                             break;
@@ -171,7 +171,7 @@
                     echo "</select>";
                 } else {
                     switch ($corpOnly) {
-                        case 1:
+                        case true:
                             $pheal->scope = "eve";
                             $corpName = $pheal->CharacterName(array("ids" => $corpID));
                             $corpName = $corpName->characters[0]['name'];
