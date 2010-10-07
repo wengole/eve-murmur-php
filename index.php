@@ -7,19 +7,19 @@
         <title>EVE Murmur API Registration</title>
     </head>
     <body>
-            <div id="overlay" style="display: none;"></div>
+        <div id="overlay" style="display: none;"></div>
 
-            <div id="success_box"style="display: none;">
-                    <a href="javascript:close();">X</a>
-                    <h1>Success!</h1>
-                    <p id="sContent"></p>
-            </div>
+        <div id="success_box"style="display: none;">
+                <a href="javascript:close();">X</a>
+                <h1>Success!</h1>
+                <p id="sContent"></p>
+        </div>
 
-            <div id="fail_box"style="display: none;">
-                    <a href="javascript:close();">X</a>
-                    <h1>Error!</h1>
-                    <p id="fContent"></p>
-            </div>
+        <div id="fail_box"style="display: none;">
+                <a href="javascript:close();">X</a>
+                <h1>Error!</h1>
+                <p id="fContent"></p>
+        </div>
         <?php
         //TODO: Move logic to separate PHP class
         require_once 'config.php';
@@ -57,13 +57,7 @@
                           Port: ' . $server->getConf('port') . '<br />
                           or click <a href="mumble://'.str_replace(".", "%2E", rawurlencode($_POST['username'])).
                             ':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.2">here</a><br />';
-            } catch (Murmur_ServerBootedException $exc) {
-                $jsText="<h4>Server not running.</h4>";
-            } catch (Murmur_InvalidSecretException $exc) {
-                $jsText="<h4>Wrong ICE secret.</h4>";
-            } catch (Murmur_InvalidUserException $exc) {
-                $jsText="<h4>Username already exists</h4>";
-                 $checker=0;
+                $checker=0;
             } catch (Murmur_ServerBootedException $exc) {
                 $jsText="Server not running.";
                 $checker=1;
@@ -98,7 +92,7 @@
                 default:
                     break;
             }
-            echo "show_overlay($jsText)";
+
             // Save API and returned userID to MySQL database for later cron use
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
@@ -146,6 +140,12 @@
                     $characters = $pheal->Characters();
                 }
                 $uname_array = array();
+                $query = "SELECT * FROM contacts WHERE standing > 0;";
+                $result = mysql_query($query, $conn);
+                $blues = array();
+                while ($row = mysql_fetch_array($result)) {
+                    $blues[] = $row['contactID'];
+                }
                 foreach ($characters->characters as $character) {
                     $pheal->scope = "char";
                     $charsheet = $pheal->CharacterSheet(array('characterID' => $character->characterID));
@@ -153,11 +153,11 @@
                     $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
                     switch ($corpOnly) {
                         case true:
-                            if ($corpsheet->corporationID == $corpID)
+                            if ($corpsheet->corporationID == $corpID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
                                 $uname_array[] = $character->name;
                             break;
                         default:
-                            if ($corpsheet->allianceID == $allianceID)
+                            if ($corpsheet->allianceID == $allianceID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
                                 $uname_array[] = $character->name;
                             break;
                     }
@@ -175,13 +175,13 @@
                             $pheal->scope = "eve";
                             $corpName = $pheal->CharacterName(array("ids" => $corpID));
                             $corpName = $corpName->characters[0]['name'];
-                            echo "<h3>No characters in $corpName on account!</h3>";
+                            echo "<h3>No characters in or blue to $corpName on account!</h3>";
                             break;
                         default:
                             $pheal->scope = "eve";
                             $allyName = $pheal->CharacterName(array("ids" => $allianceID));
                             $allyName = $allyName->characters[0]['name'];
-                            echo "<h3>No characters in $allyName on account!</h3>";
+                            echo "<h3>No characters in or blue to $allyName on account!</h3>";
                             break;
                     }
                 }
