@@ -22,7 +22,7 @@
         mysql_select_db($mysql_db, $conn);
 
         // We have all requirements, register the user
-        if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2'] 
+        if (isset($_POST['password']) && isset($_POST['password2']) && $_POST['password'] == $_POST['password2']
                 && preg_match("/^[A-Za-z0-9-._]*\z/", $_POST['password'])) {
             //Intialise ICE
             $initData = new Ice_InitializationData;
@@ -37,12 +37,12 @@
             // Encrypting password doesn't work
             $userinfo = array($_POST['username'], null, null, null, $_POST['password']);
             try {
-                 $murmur_userid = $server->registerUser($userinfo);
-                 echo '<p>Successfully registered ' . $_POST['username'] . '<br />
+                $murmur_userid = $server->registerUser($userinfo);
+                echo '<p>Successfully registered ' . $_POST['username'] . '<br />
                           Please connect to: ' . $server->getConf('host') . '<br />
                           Port: ' . $server->getConf('port') . '<br />
-                          or click <a href="mumble://'.str_replace(".", "%2E", rawurlencode($_POST['username'])).
-                          ':'.$_POST['password'].'@'.$server->getConf('host').':'.$server->getConf('port').'/?version=1.2.2">here</a><br /></p>';
+                          or click <a href="mumble://' . str_replace(".", "%2E", rawurlencode($_POST['username'])) .
+                ':' . $_POST['password'] . '@' . $server->getConf('host') . ':' . $server->getConf('port') . '/?version=1.2.2">here</a><br /></p>';
             } catch (Murmur_ServerBootedException $exc) {
                 echo "<h4>Server not running.</h4>";
             } catch (Murmur_InvalidSecretException $exc) {
@@ -68,9 +68,10 @@
                     echo "<h4>Failed to INSERT into database.</h4>";
             }
         } else {
-            echo   '<div id="apicontent">
+            echo '<div id="apicontent">
                     <form method="POST">
                     <h1>Mumble Registration</h1>
+                    <p>You will need your Limited API Key. Please visit <a href="http://www.eveonline.com/api/">http://www.eveonline.com/api/</a>.</p>
                     <p>User ID:</p>
                     <input type = "text" id="useridinput" name="userid" value="';
             if (isset($_POST['userid']))
@@ -79,7 +80,7 @@
                 <p>Limited API:</p>
 		<input type = "text" id="apiinput" name="apikey" value="';
             if (isset($_POST['apikey']))
-                    echo $_POST['apikey'];
+                echo $_POST['apikey'];
             echo '">';
 
             // Create Pheal instance to grab characters on account
@@ -93,7 +94,13 @@
                     $characters = $pheal->Characters();
                 } catch (Exception $exc) {
                     PhealConfig::getInstance()->cache = new PhealFileCacheForced($pheal_cache);
-                    $characters = $pheal->Characters();
+                    try {
+                        $characters = $pheal->Characters();
+                    } catch (PhealAPIException $exc) {
+                        echo '<h3>You must provide a valid userID and API Key</h3>';
+                        unset($_POST['userid']);
+                        unset($_POST['apikey']);
+                    }
                 }
                 $uname_array = array();
                 $query = "SELECT * FROM contacts WHERE standing > 0;";
@@ -102,43 +109,45 @@
                 while ($row = mysql_fetch_array($result)) {
                     $blues[] = $row['contactID'];
                 }
-                foreach ($characters->characters as $character) {
-                    $pheal->scope = "char";
-                    $charsheet = $pheal->CharacterSheet(array('characterID' => $character->characterID));
-                    $pheal->scope = "corp";
-                    $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
-                    switch ($corpOnly) {
-                        case true:
-                            if ($corpsheet->corporationID == $corpID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
-                                $uname_array[] = $character->name;
-                            break;
-                        default:
-                            if ($corpsheet->allianceID == $allianceID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
-                                $uname_array[] = $character->name;
-                            break;
+                if (isset($characters)) {
+                    foreach ($characters->characters as $character) {
+                        $pheal->scope = "char";
+                        $charsheet = $pheal->CharacterSheet(array('characterID' => $character->characterID));
+                        $pheal->scope = "corp";
+                        $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
+                        switch ($corpOnly) {
+                            case true:
+                                if ($corpsheet->corporationID == $corpID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
+                                    $uname_array[] = $character->name;
+                                break;
+                            default:
+                                if ($corpsheet->allianceID == $allianceID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
+                                    $uname_array[] = $character->name;
+                                break;
+                        }
                     }
-                }
-                if (!empty($uname_array)) {
-                    echo "<p>Pick Character:</p>
+                    if (!empty($uname_array)) {
+                        echo "<p>Pick Character:</p>
 			<select id='userselect' name='username'>";
-                    foreach ($uname_array as $username) {
-                        echo "<option>$username";
-                    }
-                    echo "</select>";
-                } else {
-                    switch ($corpOnly) {
-                        case true:
-                            $pheal->scope = "eve";
-                            $corpName = $pheal->CharacterName(array("ids" => $corpID));
-                            $corpName = $corpName->characters[0]['name'];
-                            echo "<h3>No characters in or blue to $corpName on account!</h3>";
-                            break;
-                        default:
-                            $pheal->scope = "eve";
-                            $allyName = $pheal->CharacterName(array("ids" => $allianceID));
-                            $allyName = $allyName->characters[0]['name'];
-                            echo "<h3>No characters in or blue to $allyName on account!</h3>";
-                            break;
+                        foreach ($uname_array as $username) {
+                            echo "<option>$username";
+                        }
+                        echo "</select>";
+                    } else {
+                        switch ($corpOnly) {
+                            case true:
+                                $pheal->scope = "eve";
+                                $corpName = $pheal->CharacterName(array("ids" => $corpID));
+                                $corpName = $corpName->characters[0]['name'];
+                                echo "<h3>No characters in or blue to $corpName on account!</h3>";
+                                break;
+                            default:
+                                $pheal->scope = "eve";
+                                $allyName = $pheal->CharacterName(array("ids" => $allianceID));
+                                $allyName = $allyName->characters[0]['name'];
+                                echo "<h3>No characters in or blue to $allyName on account!</h3>";
+                                break;
+                        }
                     }
                 }
             }
@@ -148,11 +157,11 @@
                 echo "<p>Confirm:</p>
                         <input type = 'password' id = 'confirminput' name = 'password2' value = ''>";
                 if (isset($_POST['password']) && isset($_POST['password2']))
-                        if ($_POST['password'] != $_POST['password2']) {
-                            echo "<h3>Passwords do not match</h3>";
-                        } elseif (preg_match("/^[A-Za-z0-9-._]*\z/", $_POST['password']) == 0) {
-                            echo "<h3>Only letters, numbers - . _ allowed</h3>";
-                        }
+                    if ($_POST['password'] != $_POST['password2']) {
+                        echo "<h3>Passwords do not match</h3>";
+                    } elseif (preg_match("/^[A-Za-z0-9-._]*\z/", $_POST['password']) == 0) {
+                        echo "<h3>Only letters, numbers - . _ allowed</h3>";
+                    }
             }
             echo "<div class='buttons'>
 				<button type='submit' class='positive' name='save' value='Submit'>
