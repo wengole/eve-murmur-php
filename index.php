@@ -37,21 +37,25 @@
             // Encrypting password doesn't work
             $userinfo = array($_POST['username'], null, null, null, $_POST['password']);
             try {
+//                if ("[".$corpsheet->ticker."] ".$username == $username)
+//                        throw Murmur_InvalidUserException;
                 $murmur_userid = $server->registerUser($userinfo);
-                echo '<p>Successfully registered ' . $_POST['username'] . '<br />
-                          Please connect to: ' . $server->getConf('host') . '<br />
-                          Port: ' . $server->getConf('port') . '<br />
-                          or click <a href="mumble://' . str_replace(".", "%2E", rawurlencode($_POST['username'])) .
-                ':' . $_POST['password'] . '@' . $server->getConf('host') . ':' . $server->getConf('port') . '/?version=1.2.2">here</a><br /></p>';
+                echo '<div id="apicontent"><h2>Successfully registered ' . $_POST['username'] . '</h2>
+                    <p>Please connect to: ' . $server->getConf('host') . '</p>
+                    <p>Port: ' . $server->getConf('port') . '</p>
+                    <p>or click <a href="mumble://' . str_replace(".", "%2E", rawurlencode($_POST['username'])) .
+                    ':' . $_POST['password'] . '@' . $server->getConf('host') . ':' . $server->getConf('port') . '/?version=1.2.2">here</a> once you have Mumble installed</p>
+                    <p>Once connected go to Server->Connect, hit Add New..., give it a label (e.g. Brick Squad) then click OK to save the connection as a favourite</p>';
             } catch (Murmur_ServerBootedException $exc) {
-                echo "<h4>Server not running.</h4>";
+                echo "<div id='apicontent'><h4>Server not running.</h4></div>";
             } catch (Murmur_InvalidSecretException $exc) {
-                echo "<h4>Wrong ICE secret.</h4>";
+                echo "<div id='apicontent'><h4>Wrong ICE secret.</h4></div>";
             } catch (Murmur_InvalidUserException $exc) {
-                echo "<h4>Username already exists.</h4>";
+                echo "<div id='apicontent'><h4>Username already exists.</h4></div>";
             }
 
             // Save API and returned userID to MySQL database for later cron use
+            // Add new user to appropriate group
             if (isset($murmur_userid)) {
                 $pheal = new Pheal($_POST['userid'], $_POST['apikey'], "eve");
                 $charid = $pheal->CharacterID(array('names' => $_POST['username']));
@@ -66,12 +70,31 @@
 			ON DUPLICATE KEY UPDATE eveCharID = $charid, eveCorpID = $charsheet->corporationID, eveAllyID = $corpsheet->allianceID";
                 if (!mysql_query($qry, $conn))
                     echo "<h4>Failed to INSERT into database.</h4>";
+                $server->getACL(0, $acls, $groups, $inherit);
+                foreach ($groups as $group) {
+                        if ($group->name == "blues" && $corpsheet->allianceID != $allianceID) {
+                            echo "<p>You have been added as a blue</p>";
+                            $add = $group->members;
+                            $add[] = $murmur_userid;
+                            $group->add = $add;
+                            $server->setACL(0, $acls, $groups, $inherit);
+                            continue;
+                        } elseif ($group->name == "admin" && $corpsheet->ceoID == $charid && $corpsheet->allianceID == $allianceID) {
+                            echo "<p>You have been added as an admin</p>";
+                            $add = $group->members;
+                            $add[] = $murmur_userid;
+                            $group->add = $add;
+                            $server->setACL(0, $acls,$groups, $inherit);
+                        }
+                }
             }
+            echo "</div>";
         } else {
             echo '<div id="apicontent">
                     <form method="POST">
                     <h1>Mumble Registration</h1>
-                    <p>You will need your Limited API Key. Please visit <a href="http://www.eveonline.com/api/">http://www.eveonline.com/api/</a>.</p>
+                    <p>1. <a href="http://mumble.sourceforge.net" target="_blank">Download Mumble</a></p>
+                    <p>2. <a href="http://www.eveonline.com/api/" target="_blank">Get your limited API Key</a></p>
                     <p>User ID:</p>
                     <input type = "text" id="useridinput" name="userid" value="';
             if (isset($_POST['userid']))
