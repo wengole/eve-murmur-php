@@ -11,6 +11,14 @@ html, body {
    background-color: #222222;
 }
  
+a {
+    
+    color: #e2b717;
+    font-weight: bold;
+    font-style: italic;
+    text-decoration: underline;
+}
+
 p {
    /*width: 25%;*/
    font-family: Georgia, "Times New Roman", Times, serif;
