@@ -37,15 +37,18 @@
             // Encrypting password doesn't work
             $userinfo = array($_POST['username'], null, null, null, $_POST['password']);
             try {
-//                if ("[".$corpsheet->ticker."] ".$username == $username)
-//                        throw Murmur_InvalidUserException;
+                $reg_users = $server->getRegisteredUsers('');
+                foreach ($reg_users as $userid => $username) {
+                    if(stristr($username, $_POST['username'])) throw new Murmur_InvalidUserException;
+                }
                 $murmur_userid = $server->registerUser($userinfo);
-                echo '<div id="apicontent"><h2>Successfully registered ' . $_POST['username'] . '</h2>
+                echo '<div id="apicontent"><br /><h2>Successfully registered ' . $_POST['username'] . '</h2>
                     <p>Please connect to: ' . $server->getConf('host') . '</p>
                     <p>Port: ' . $server->getConf('port') . '</p>
                     <p>or click <a href="mumble://' . str_replace(".", "%2E", rawurlencode($_POST['username'])) .
                     ':' . $_POST['password'] . '@' . $server->getConf('host') . ':' . $server->getConf('port') . '/?version=1.2.2">here</a> once you have Mumble installed</p>
-                    <p>Once connected go to Server->Connect, hit Add New..., give it a label (e.g. Brick Squad) then click OK to save the connection as a favourite</p>';
+                    <p>Once connected go to Server->Connect, hit Add New..., give it a label (e.g. Brick Squad) then click OK to save the connection as a favourite</p>
+                    <p>Your corp ticker will be prepended to your username automatically within 5 minutes and will take effect next time you login</p>';
             } catch (Murmur_ServerBootedException $exc) {
                 echo "<div id='apicontent'><h4>Server not running.</h4></div>";
             } catch (Murmur_InvalidSecretException $exc) {
@@ -111,7 +114,11 @@
             // Verify characters are in Brick before proceeding
             // Output info as <select><option>'s
             if (isset($_POST['userid']) && isset($_POST['apikey'])) {
-                $pheal = new Pheal($_POST['userid'], $_POST['apikey']);
+                if (preg_match('/^[0-9]*\z/', $_POST['userid'])) {
+                    $pheal = new Pheal($_POST['userid'], $_POST['apikey']);
+                } else {
+                    $pheal = new Pheal('123456', 'abc123');
+                }
                 // On API errors switch to using cache files only
                 try {
                     $characters = $pheal->Characters();
@@ -119,8 +126,9 @@
                     PhealConfig::getInstance()->cache = new PhealFileCacheForced($pheal_cache);
                     try {
                         $characters = $pheal->Characters();
-                    } catch (PhealAPIException $exc) {
+                    } catch (Exception $exc) {
                         echo '<h3>You must provide a valid userID and API Key</h3>';
+                        echo '<h3>User ID is a 6+ digit number<br />API Key is a 64 character string</h3>';
                         unset($_POST['userid']);
                         unset($_POST['apikey']);
                     }
