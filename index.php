@@ -161,7 +161,11 @@
                         echo "<p>Pick Character:</p>
 			<select id='userselect' name='username'>";
                         foreach ($uname_array as $username) {
-                            echo "<option>$username";
+                            if (isset($_POST['username']) && $username == $_POST['username']) {
+	                        echo "<option selected='selected'>$username";
+                            } else {
+                            	echo "<option>$username";
+                            }
                         }
                         echo "</select>";
                     } else {
