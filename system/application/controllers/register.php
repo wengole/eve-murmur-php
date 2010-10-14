@@ -9,10 +9,8 @@ class Register extends Controller {
 
 	function index()
 	{
+            $this->load->model('User','',TRUE);
             $this->load->helper('html');
             $this->load->view('registerview');
 	}
 }
-
-/* End of file welcome.php */
-/* Location: ./system/application/controllers/welcome.php */
