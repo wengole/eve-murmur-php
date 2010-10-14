@@ -9,7 +9,8 @@ class Register extends Controller {
 
 	function index()
 	{
-		$this->load->view('welcome_message');
+            $this->load->helper('html');
+            $this->load->view('registerview');
 	}
 }
 
