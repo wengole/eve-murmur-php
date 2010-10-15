@@ -76,7 +76,7 @@ h4 {
     text-align: left;
 }
 
-#userselect {
+.userselect {
     width: 100%;
     font-size: 1.5em;
 }
