@@ -13,15 +13,15 @@
             <p>2. <a href="http://www.eveonline.com/api/" target="_blank">Get your limited API Key</a></p>
             <?= form_open('register/add'); ?>
             <p>User ID:</p>
-            <input type = "text" id="useridinput" name="userid" value="<?= set_value('userid'); ?>">
+            <?= form_input(array('name'=>'userid','class'=>'userinput','value'=>$userid)); ?>
             <p>Limited API:</p>
-            <input type = "text" id="apiinput" name="apikey" value="<?= set_value('apikey'); ?>">
+            <?= form_input(array('name'=>'apikey','class'=>'userinput','value'=>$apikey)); ?>
+            <?php if (!empty($uname_array)): ?>
+            <p>Pick Character:</p>
             <?= form_dropdown('username', $uname_array, $selected_user, $uname_attribs); ?>
+            <?php endif; ?>
             <div class='buttons'>
-                <button type='submit' class='positive' name='save' value='Submit'>
-                    <img src='images/apply2.png' alt=''/>
-                    Submit
-                </button>
+                <?= form_button(array('name'=>'save','type'=>'submit','content'=>'<img src="images/apply2.png" />Submit','class'=>'positive')); ?>
             </div>
             <?= form_close(); ?>
         </div>

@@ -20,7 +20,6 @@ a {
 }
 
 p {
-   /*width: 25%;*/
    font-family: Georgia, "Times New Roman", Times, serif;
    font-size: 14px;
    color: #cccccc;
@@ -30,7 +29,6 @@ li {
    padding-left: 2px;
    line-height: 150%;
    color: #cccccc;
-   /*list-style-image: url(../images/arrowSmall.gif);*/
 }
  
 h1 {
@@ -70,12 +68,7 @@ font,th,td,p,a,div
   font-family: Verdana, "Bitstream Vera Sans", Arial, Helvetica;
 }
  
-#useridinput
-{
-    width: 100%;
-    font-size: 1.5em;
-}
-#apiinput
+.userinput
 {
     width: 100%;
     font-size: 1.5em;
@@ -101,10 +94,6 @@ font,th,td,p,a,div
     margin-left: auto;
     margin-right: auto;
     background: #111111;
-}
-#confirminput{
-    width: 100%;
-    font-size: 1.5em;
 }
 #fail_box {
     position:fixed;
@@ -142,11 +131,6 @@ font,th,td,p,a,div
     right:0px;
     z-index:100;
     background-image: url(images/overlaywhite.JPG);
-}
-
-#passwordinput{
-    width: 100%;
-    font-size: 1.5em;
 }
  
 #pickuser {
