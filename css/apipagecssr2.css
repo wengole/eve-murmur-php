@@ -24,13 +24,7 @@ p {
    font-size: 14px;
    color: #cccccc;
 }
- 
-li {
-   padding-left: 2px;
-   line-height: 150%;
-   color: #cccccc;
-}
- 
+
 h1 {
    padding-top: 10px;
    text-align: center;
@@ -63,16 +57,12 @@ h4 {
     color: #D64556;
 }
 
-font,th,td,p,a,div
-{
-  font-family: Verdana, "Bitstream Vera Sans", Arial, Helvetica;
-}
- 
 .userinput
 {
     width: 100%;
     font-size: 1.5em;
 }
+
 #apicontent
 {
     padding-left: 10px;
@@ -85,6 +75,12 @@ font,th,td,p,a,div
     background: #111111;
     text-align: left;
 }
+
+#userselect {
+    width: 100%;
+    font-size: 1.5em;
+}
+
 #buttonsdiv{
     padding-left: 10px;
     padding-right: 10px;
@@ -95,95 +91,13 @@ font,th,td,p,a,div
     margin-right: auto;
     background: #111111;
 }
-#fail_box {
-    position:fixed;
-    top:200px;
-    left:30%;
-    right:30%;
-    background-color:#ffffff;
-    color:#7F7F7F;
-    padding-bottom: 20px;
-    padding-left: 20px;
-    padding-right: 2px;
-    padding-top: 2px;
-    border:2px solid #FF0000;
-    z-index:101;
-}
-#fail_box a {
-    float: right;
-}
 
-#fail_box p {
-    color: #222222;
-    width: 100%;
-}
-
-#fail_box h1 {
-    color: #222222;
-    text-align: left;
-}
-#overlay{
-    opacity: 0.2;
-    position:fixed;
-    top:0px;
-    bottom:0px;
-    left:0px;
-    right:0px;
-    z-index:100;
-    background-image: url(images/overlaywhite.JPG);
-}
- 
-#pickuser {
-    padding-top: 10px;
-    font-size: 14px;
-    color: #cccccc;
-}
-#submitbutton{
-    display: block;
-    font-family: Verdana, "Bitstream Vera Sans", Arial, Helvetica;
-    color: #cccccc;
-}
-#success_box {
-    position:fixed;
-    top:200px;
-    left:30%;
-    right:30%;
-    background-color:#ffffff;
-    color:#7F7F7F;
-    padding-bottom: 20px;
-    padding-left: 20px;
-    padding-right: 2px;
-    padding-top: 2px;
-    border:2px solid #00FF11;
-    z-index:101;
-}
-
-#success_box a {
-    float: right;
-}
-#success_box p {
-    color: #222222;
-    width: 100%;
-}
-
-#success_box h1 {
-    color: #222222;
-    text-align: left;
-}
-#userselect {
-    width: 100%;
-    font-size: 1.5em;
-}
-
-
-
-.buttons a, .buttons button{
+.buttons button{
     margin:15px 7px 0 0;
     background-color:#cccccc;
     border:1px solid #dedede;
     border-top:1px solid #eee;
     border-left:1px solid #eee;
-
     font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
     font-size:12px;
     line-height:130%;
@@ -193,19 +107,23 @@ font,th,td,p,a,div
     cursor:pointer;
     padding:5px 10px 6px 7px; /* Links */
 }
+
 .buttons button{
     width:auto;
     overflow:visible;
     padding:4px 10px 3px 7px; /* IE6 */
 }
+
 .buttons button[type]{
     padding:5px 10px 5px 7px; /* Firefox */
     line-height:17px; /* Safari */
 }
+
 *:first-child+html button[type]{
     padding:4px 10px 3px 7px; /* IE7 */
 }
-.buttons button img, .buttons a img{
+
+.buttons button img {
     margin:0 3px -3px 0 !important;
     padding:0;
     border:none;
@@ -213,22 +131,11 @@ font,th,td,p,a,div
     height:16px;
 }
 
-.buttons a:active{
-    background-color:#6299c5;
-    border:1px solid #6299c5;
-    color:#fff;
-}
-
-button.positive, .buttons a.positive{
+button.positive{
     color:#529214;
 }
-.buttons a.positive:hover, button.positive:hover{
+.buttons button.positive:hover{
     background-color:#E6EFC2;
     border:1px solid #C6D880;
     color:#529214;
-}
-.buttons a.positive:active{
-    background-color:#529214;
-    border:1px solid #529214;
-    color:#fff;
 }
