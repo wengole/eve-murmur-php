@@ -25,6 +25,11 @@ class Register extends Controller {
         if(!empty ($reg->username))
                 $reg->selected_user = $reg->getSelectedUser();
         $reg->password = $this->input('password');
+        $reg->password2 = $this->input('password2');
     }
 
+    function getCharacters() {
+        //TODO: Create uname_array with key of charID and value of charName
+        //
+    }
 }

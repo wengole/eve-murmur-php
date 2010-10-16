@@ -7,6 +7,7 @@ class Registration {
     public $apikey;
     public $username;
     public $password;
+    public $password2;
 
     public function getSelected_user() {
         //TODO: Set selected_user to the index of username in uname_array
