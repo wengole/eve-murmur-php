@@ -11,7 +11,10 @@ class Register extends Controller {
     function index() {
         $this->load->library('Registration');
         $reg = new Registration();
-        $this->load->view('registerview', $reg);
+        $data['main_content'] = 'registerview';
+        $data['title'] = 'Mumble Registration';
+        $data['data'] = $reg;
+        $this->load->view('includes/template', $data);
     }
 
     function add() {
