@@ -5,12 +5,11 @@ class Register extends Controller {
     function Register() {
         parent::Controller();
         $this->load->helper(array('html', 'form'));
-        
+        $this->load->library('Registration');
+        $reg = new Registration();
     }
 
     function index() {
-        $this->load->library('Registration');
-        $reg = new Registration();
         $data['main_content'] = 'registerview';
         $data['title'] = 'Mumble Registration';
         $data['data'] = $reg;
@@ -18,7 +17,14 @@ class Register extends Controller {
     }
 
     function add() {
-        echo "test";
+        $reg->userid = $this->input('userid');
+        $reg->apikey = $this->input('apikey');
+        $reg->username = $this->input('username');
+        if(empty ($reg->uname_array) && !empty ($reg->userid) && !empty ($reg->apikey))
+                $reg->uname_array = $this->getCharacters();
+        if(!empty ($reg->username))
+                $reg->selected_user = $reg->getSelectedUser();
+        $reg->password = $this->input('password');
     }
 
 }
