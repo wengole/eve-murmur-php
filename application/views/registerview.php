@@ -1,12 +1,3 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <?= link_tag('css/apipagecssr2.css', 'stylesheet', 'text/css') ?>
-
-        <title>Mumble Registration</title>
-    </head>
-    <body>
         <div id="apicontent">
             <h1>Mumble Registration</h1>
             <p>1. <a href="http://mumble.sourceforge.net" target="_blank">Download Mumble</a></p>
@@ -32,7 +23,5 @@
             </div>
             <?= form_close(); ?>
         </div>
-        <?= "Time".$this->benchmark->elapsed_time();?>
-        <?= "Memory".$this->benchmark->memory_usage();?>
-    </body>
-</html>
+        <?= "Time: ".$this->benchmark->elapsed_time();?>
+        <?= "\tMemory: ".$this->benchmark->memory_usage();?>
