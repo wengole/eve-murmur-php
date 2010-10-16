@@ -32,5 +32,7 @@
             </div>
             <?= form_close(); ?>
         </div>
+        <?= "Time".$this->benchmark->elapsed_time();?>
+        <?= "Memory".$this->benchmark->memory_usage();?>
     </body>
 </html>
