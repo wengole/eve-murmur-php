@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema version="0.3" xmlns="http://yapeal.googlecode.com/files/xmlschema03">
+<!--
+/**
+ * XML from Yapeal.
+ *
+ * PHP version 5
+ *
+ * LICENSE: This file is part of Yet Another Php Eve Api library also know
+ * as Yapeal which will be used to refer to it in the rest of this license.
+ *
+ *  Yapeal is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Yapeal is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with Yapeal. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Michael Cummings <mgcummings@yahoo.com>
+ * @copyright Copyright (c) 2008-2009, Michael Cummings
+ * @license http://www.gnu.org/copyleft/lesser.html GNU LGPL
+ * @package Yapeal
+ * @subpackage Setup
+ */
+-->
+  <!-- Utility Section -->
+  <table name="utilCachedUntil">
+    <descr>Used to track cache times of the APIs</descr>
+    <field name="`ownerID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`api`" type="C" size="32">
+      <KEY/>
+    </field>
+    <field name="`cachedUntil`" type="T">
+      <NOTNULL/>
+    </field>
+    <field name="`section`" type="C" size="32">
+      <NOTNULL/>
+    </field>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilConfig">
+    <descr>Currently unused was formally use in old installer but it being kept around for now</descr>
+    <field name="`Name`" type="C" size="32">
+      <KEY/>
+    </field>
+    <field name="`Value`" type="C" size="255"/>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilRegisteredCharacter">
+    <descr>Used to maintain a list of characters that are registered with Yapeal to have their API gotten</descr>
+    <field name="`activeAPI`" type="X"/>
+    <field name="`characterID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`corporationID`" type="I8" size="20">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`corporationName`" type="C" size="255">
+      <NOTNULL/>
+    </field>
+    <field name="`graphic`" type="B"/>
+    <field name="`graphicType`" type="C" size="16"/>
+    <field name="`isActive`" type="I1" size="1">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`name`" type="C" size="255">
+      <NOTNULL/>
+    </field>
+    <field name="`proxy`" type="C" size="255"/>
+    <field name="`userID`" type="I8" size="20">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilRegisteredCorporation">
+    <descr>Used to maintain a list of corporations that are registered with Yapeal to have their API gotten</descr>
+    <field name="`activeAPI`" type="X"/>
+    <field name="`characterID`" type="I8" size="20">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`corporationID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`corporationName`" type="C" size="255"/>
+    <field name="`graphic`" type="B"/>
+    <field name="`graphicType`" type="C" size="16"/>
+    <field name="`isActive`" type="I1" size="1">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`proxy`" type="C" size="255"/>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilRegisteredUser">
+    <descr>Used to maintain a list of users (accounts) that are registered with Yapeal to have their API gotten</descr>
+    <field name="`activeAPI`" type="X"/>
+    <field name="`fullApiKey`" type="C" size="64"/>
+    <field name="`isActive`" type="I1" size="1">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`limitedApiKey`" type="C" size="64"/>
+    <field name="`proxy`" type="C" size="255"/>
+    <field name="`userID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilSections">
+    <descr>Table used to allow admin control over which API will be available to registered user/char/corp also controls all other API sections</descr>
+    <field name="`activeAPI`" type="X"/>
+    <field name="`isActive`" type="I1" size="1">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`proxy`" type="C" size="255"/>
+    <field name="`sectionID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`section`" type="C" size="32">
+      <KEY/>
+    </field>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <table name="utilXmlCache">
+    <descr>Use to cache API XML if database cache is enabled</descr>
+    <field name="`hash`" type="C" size="64">
+      <KEY/>
+    </field>
+    <field name="`api`" type="C" size="32">
+      <NOTNULL/>
+    </field>
+    <field name="`section`" type="C" size="32">
+      <NOTNULL/>
+    </field>
+    <field name="`xml`" type="X2">
+      <NOTNULL/>
+    </field>
+    <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>
+  <sql prefixmethod="MANUAL">
+    <query platform="mysql">ALTER TABLE `%%PutilRegisteredCharacter` MODIFY `graphic` BLOB DEFAULT NULL</query>
+    <query platform="mysql">ALTER TABLE `%%PutilRegisteredCharacter` MODIFY `isActive` BOOLEAN NOT NULL</query>
+  </sql>
+  <sql prefixmethod="MANUAL">
+    <query platform="mysql">ALTER TABLE `%%PutilRegisteredCorporation` MODIFY `graphic` BLOB DEFAULT NULL</query>
+    <query platform="mysql">ALTER TABLE `%%PutilRegisteredCorporation` MODIFY `isActive` BOOLEAN NOT NULL</query>
+  </sql>
+  <sql prefixmethod="MANUAL">
+    <query platform="mysql">ALTER TABLE `%%PutilRegisteredUser` MODIFY `isActive` BOOLEAN NOT NULL</query>
+  </sql>
+  <sql prefixmethod="MANUAL">
+    <query platform="mysql">ALTER TABLE `%%PutilSections` MODIFY `isActive` BOOLEAN NOT NULL</query>
+  </sql>
+  <sql prefixmethod="MANUAL">
+    <query platform="mysql">ALTER TABLE `%%PutilXmlCache` MODIFY `xml` LONGTEXT NOT NULL</query>
+  </sql>
+</schema>
