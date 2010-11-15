@@ -79,6 +79,9 @@ class charCharacterSheet  extends AChar {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
             switch ($this->xr->localName) {
+              case 'allianceID':
+              case 'allianceName':
+              case 'ancestry':
               case 'balance':
               case 'bloodLine':
               case 'characterID':

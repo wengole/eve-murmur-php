@@ -100,11 +100,11 @@ class RegisteredUser extends ALimitedObject implements IGetBy {
     $this->colTypes = $this->qb->getColumnTypes();
     // Was $id set?
     if (!empty($id)) {
-      // If $id is a number and doesn't exist yet set userID with it.
       // If $id has any characters other than 0-9 it's not an userID.
       if (0 == strlen(str_replace(range(0,9), '', $id))) {
         if (FALSE === $this->getItemById($id)) {
           if (TRUE == $create) {
+            // If $id is a number and doesn't exist yet set userID with it.
             $this->properties['userID'] = $id;
           } else {
             $mess = 'Unknown user ' . $id;
@@ -249,6 +249,13 @@ class RegisteredUser extends ALimitedObject implements IGetBy {
    * @return bool Return TRUE if store was successful.
    */
   public function store() {
+    $apis = explode(' ', $this->properties['activeAPI']);
+    $unknowns = array_diff($apis, $this->apiList);
+    if (!empty($unknowns)) {
+      $mess = 'activeAPI contains the following unknown APIs: ';
+      $mess .= implode(', ', $unknowns);
+      trigger_error($mess, E_USER_WARNING);
+    };
     if (FALSE === $this->qb->addRow($this->properties)) {
       return FALSE;
     };// if FALSE === ...

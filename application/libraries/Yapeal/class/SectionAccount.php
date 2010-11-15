@@ -52,7 +52,7 @@ class SectionAccount {
    */
   private $apiList;
   /**
-   * @var string Hold section name.
+   * @var string Holds section name.
    */
   private $section;
   /**
@@ -83,17 +83,28 @@ class SectionAccount {
         trigger_error($mess, E_USER_NOTICE);
         return FALSE;
       };// if empty $userList ...
-      // Ok now that we have a list of users that need updated
-      // we can check API for updates to their information.
-      foreach ($userList as $user) {
-        $activeAPI = $user['activeAPI'];
-        $apiKey = $user['apiKey'];
-        $userID = $user['userID'];
-        //extract($user);
-        /* **********************************************************************
-         * Per user API pulls
-         * **********************************************************************/
-        $apis = array_intersect($this->apiList, explode(' ', $activeAPI));
+      // Ok now that we have a list of users we can check which APIs need updated.
+      foreach ($userList as $usr) {
+        $userID = $usr['userID'];
+        try {
+          // Grab a user object.
+          $user = new RegisteredUser($userID, FALSE);
+        }
+        catch (Exception $e) {
+          // Can't update users that don't exist or cause errors.
+          continue;
+        }
+        if ($user->isActive == 0) {
+          // Skip inactive users.
+          continue;
+        };
+        if (isset($user->fullApiKey)) {
+          $apiKey = $user->fullApiKey;
+        } else {
+          $apiKey = $user->limitedApiKey;
+        };
+        // Get a list of allowed APIs
+        $apis = array_intersect($this->apiList, explode(' ', $user->activeAPI));
         if (count($apis) == 0) {
           $mess = 'None of the allowed APIs are currently active for ' . $userID;
           trigger_error($mess, E_USER_NOTICE);
@@ -163,7 +174,7 @@ class SectionAccount {
     catch (ADODB_Exception $e) {
       // Do nothing use observers to log info.
     }
-    // Only truly successful if API was fetched and stored.
+    // Only truly successful if all APIs were fetched and stored.
     if ($apiCount == $apiSuccess) {
       return TRUE;
     } else {
@@ -180,14 +191,12 @@ class SectionAccount {
   private function getRegisteredUsers() {
     $con = YapealDBConnection::connect(YAPEAL_DSN);
     // Generate a list of user(s) we need to do updates for
-    $sql = 'select `activeAPI`,';
-    $sql .= 'coalesce(`fullApiKey`,`limitedApiKey`) as apiKey,`userID`';
+    $sql = 'select `userID`';
     $sql .= ' from ';
     $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser`';
-    $sql .= ' where `isActive`=1';
     $result = $con->GetAll($sql);
-    // Randomize order so no one user can starve the rest in case of
-    // errors, etc.
+    // Randomize order so no one user can starve the rest in case of errors,
+    // etc.
     if (count($result) > 1) {
       shuffle($result);
     };

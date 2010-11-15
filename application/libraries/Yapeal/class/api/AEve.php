@@ -76,11 +76,11 @@ abstract class AEve extends AApiRequest {
     $default .= '/' . $this->api . '.xml.aspx';
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'select sec.`proxy`';
+      $sql = 'select `proxy`';
       $sql .= ' from ';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilSections` as sec';
+      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilSections`';
       $sql .= ' where';
-      $sql .= ' sec.`section`=' . $con->qstr($this->section);
+      $sql .= ' `section`=' . $con->qstr($this->section);
       $result = $con->GetOne($sql);
       if (empty($result)) {
         return $default;

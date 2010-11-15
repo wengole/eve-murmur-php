@@ -100,30 +100,31 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
     $this->colTypes = $this->qb->getColumnTypes();
     // Was $id set?
     if (!empty($id)) {
-      // If $id is a number and doesn't exist yet set corporationID with it.
       // If $id has any characters other than 0-9 it's not a corporationID.
       if (0 == strlen(str_replace(range(0,9), '', $id))) {
         if (FALSE === $this->getItemById($id)) {
           if (TRUE == $create) {
+            // If $id is a number and doesn't exist yet set corporationID with it.
             $this->properties['corporationID'] = $id;
           } else {
             $mess = 'Unknown corporation ' . $id;
-            throw new DomainException($mess, 1);
+            throw new DomainException($mess, 2);
           };// else ...
         };
         // else if it's a string ...
       } else if (is_string($id)) {
         if (FALSE === $this->getItemByName($id)) {
           if (TRUE == $create) {
+            // If $id is a string and doesn't exist yet set corporationName with it.
             $this->properties['corporationName'] = $id;
           } else {
             $mess = 'Unknown corporation ' . $id;
-            throw new DomainException($mess, 2);
+            throw new DomainException($mess, 3);
           };// else ...
         };
       } else {
         $mess = 'Parameter $id must be an integer or a string';
-        throw new InvalidArgumentException($mess, 3);
+        throw new InvalidArgumentException($mess, 4);
       };// else ...
     };// if !empty $id ...
   }// function __construct
@@ -147,7 +148,7 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
   public function addActiveAPI($name) {
     if (!in_array($name, $this->apiList)) {
       $mess = 'Unknown API: ' . $name;
-      throw new DomainException($mess, 1);
+      throw new DomainException($mess, 5);
     };// if !in_array...
     $apis = explode(' ', $this->properties['activeAPI']);
     if(in_array($name, $apis)) {
@@ -172,7 +173,7 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
   public function deleteActiveAPI($name) {
     if (!in_array($name, $this->apiList)) {
       $mess = 'Unknown API: ' . $name;
-      throw new DomainException($mess, 1);
+      throw new DomainException($mess, 6);
     };// if !in_array...
     $apis = explode(' ', $this->properties['activeAPI']);
     $ret = FALSE;
@@ -201,6 +202,15 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
       $result = $this->con->GetRow($sql);
       if (!empty($result)) {
         $this->properties = $result;
+        $parent = $this->parentTableExists();
+        if (!empty($parent)) {
+          $mess = 'Parent record(s) missing from ';
+          $mess .= implode(', ', array_keys($parent)) . ' for ';
+          $mess .= implode(', ', $parent);
+          $mess .= ' making corporationID ' . $this->properties['corporationID'];
+          $mess .= ' in utilRegisteredCorporation incomplete.';
+          trigger_error($mess, E_USER_WARNING);
+        };
         $this->recordExists = TRUE;
       } else {
         $this->recordExists = FALSE;
@@ -228,6 +238,15 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
       $result = $this->con->GetRow($sql);
       if (!empty($result)) {
         $this->properties = $result;
+        $parent = $this->parentTableExists();
+        if (!empty($parent)) {
+          $mess = 'Parent record(s) missing from ';
+          $mess .= implode(', ', array_keys($parent)) . ' for ';
+          $mess .= implode(', ', $parent);
+          $mess .= ' making corporationID ' . $this->properties['corporationID'];
+          $mess .= ' in utilRegisteredCorporation incomplete.';
+          trigger_error($mess, E_USER_WARNING);
+        };
         $this->recordExists = TRUE;
       } else {
         $this->recordExists = FALSE;
@@ -238,6 +257,28 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
     }
     return $this->recordExists;
   }// function getItemByName
+  /**
+   * Used to check for required record in parent table(s) that must exist.
+   *
+   * @return array Returns empty array if parent table record(s) exists else an
+   * assoc array of table name and ID of missing record(s).
+   */
+  private function parentTableExists() {
+    $result = array();
+    try {
+      $char = new RegisteredCharacter($this->properties['characterID'], FALSE);
+    }
+    catch (Exception $e) {
+      $result['utilRegisteredCharacter'] = $this->properties['characterID'];
+    }
+    try {
+      $user = new RegisteredUser((string)$char->userID, FALSE);
+    }
+    catch (Exception $e) {
+      $result['utilRegisteredUser'] = (string)$char->userID;
+    }
+    return $result;
+  }// function parentTableExists
   /**
    * Function used to check if database record already existed.
    *
@@ -273,6 +314,22 @@ class RegisteredCorporation extends ALimitedObject implements IGetBy {
    * @return bool Return TRUE if store was successful.
    */
   public function store() {
+    $apis = explode(' ', $this->properties['activeAPI']);
+    $unknowns = array_diff($apis, $this->apiList);
+    if (!empty($unknowns)) {
+      $mess = 'activeAPI contains the following unknown APIs: ';
+      $mess .= implode(', ', $unknowns);
+      trigger_error($mess, E_USER_WARNING);
+    };
+    $parent = $this->parentTableExists();
+    if (!empty($parent)) {
+      $mess = 'Parent record(s) missing from ';
+      $mess .= implode(', ', array_keys($parent)) . ' for ';
+      $mess .= implode(', ', $parent);
+      $mess .= ' making corporationID ' . $this->properties['corporationID'];
+      $mess .= ' in utilRegisteredCorporation incomplete and could not store.';
+      throw new LogicException($mess, 7);
+    };
     if (FALSE === $this->qb->addRow($this->properties)) {
       return FALSE;
     };// if FALSE === ...

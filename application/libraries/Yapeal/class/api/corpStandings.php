@@ -66,31 +66,12 @@ class corpStandings extends ACorp {
    * @return bool Returns TRUE if XML was parsered correctly, FALSE if not.
    */
   protected function parserAPI() {
+    $prefix = 'StandingsFrom';
     try {
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
             switch ($this->xr->localName) {
-              case 'allianceStandings':
-                $group = 'Alliance';
-                break;
-              case 'corporationStandings':
-                $group = '';
-                break;
-              case 'standingsFrom':
-                // Check if empty.
-                if ($this->xr->isEmptyElement == 1) {
-                  break;
-                };// if $this->xr->isEmptyElement ...
-                $prefix = 'standings' . $group . 'From';
-                break;
-              case 'standingsTo':
-                // Check if empty.
-                if ($this->xr->isEmptyElement == 1) {
-                  break;
-                };// if $this->xr->isEmptyElement ...
-                $prefix = 'standings' . $group . 'To';
-                break;
               case 'rowset':
                 // Check if empty.
                 if ($this->xr->isEmptyElement == 1) {
@@ -132,7 +113,7 @@ class corpStandings extends ACorp {
    * @return Bool Return TRUE if store was successful.
    */
   protected function rowset($table) {
-    $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst($table);
+    $tableName = YAPEAL_TABLE_PREFIX . $this->section . $table;
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
       $sql = 'delete from `' . $tableName . '`';

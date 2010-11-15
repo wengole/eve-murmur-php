@@ -39,7 +39,7 @@ if (isset($_REQUEST['viewSource'])) {
 if (basename(__FILE__) != basename($_SERVER['PHP_SELF'])) {
   exit();
 };
-$ret = 'error';
+$ret = 'false';
 if ($argc != 5) {
   $mess = 'Host, Username, Password, DB are required in ' . $argv[0] . PHP_EOL;
   fwrite(STDERR, $mess);
