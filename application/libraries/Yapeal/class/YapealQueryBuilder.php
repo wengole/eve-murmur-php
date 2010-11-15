@@ -349,8 +349,10 @@ class YapealQueryBuilder implements Countable {
       return FALSE;
     };
     $cnt = $this->count();
-    $mess = 'Upserting ' . $cnt . ' records for ' . $this->tableName;
-    trigger_error($mess, E_USER_NOTICE);
+    //if (substr($this->tableName, 0, 4) !== 'util') {
+    //  $mess = 'Upserting ' . $cnt . ' records to ' . $this->tableName;
+    //  trigger_error($mess, E_USER_NOTICE);
+    //};
     $sql = 'insert into `' . $this->tableName;
     $sql .= '` (`' . implode('`,`', array_keys($this->colTypes)) . '`)';
     $sql .= ' values ' . implode(',', $this->rows);

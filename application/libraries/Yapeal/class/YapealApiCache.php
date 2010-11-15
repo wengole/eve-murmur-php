@@ -99,6 +99,10 @@ class YapealApiCache {
    */
   public function cacheXml($xml) {
     if (TRUE == YAPEAL_CACHE_XML) {
+      if (FALSE === $this->validateXML($xml)) {
+        $mess = 'Caching invalid API XML for ' . $this->section . $this->api;
+        trigger_error($mess, E_USER_WARNING);
+      };
       switch (YAPEAL_CACHE_OUTPUT) {
         case 'both':
           $this->cacheXmlDatabase($xml);
@@ -296,17 +300,38 @@ class YapealApiCache {
     $xr = new XMLReader();
     // Assume it's a filename if there's no XML header.
     if (FALSE === strpos($xml, "?xml version='1.0'")) {
+      if (FALSE !== strpos($xml, '<!DOCTYPE html')) {
+        $mess = 'API returned HTML error page.';
+        $mess .= ' Check to make sure API ';
+        $mess .= $this->section . '/' . $this->api;
+        $mess .= ' is valid for server.';
+        trigger_error($mess, E_USER_WARNING);
+        return FALSE;
+      };// if FALSE !== strpos <!DOCTYPE html ...
       $fileName = realpath($xml);
+      if (FALSE === $fileName) {
+        $mess = 'Invalid file name or file path used: ' . $xml;
+        trigger_error($mess, E_USER_WARNING);
+        return FALSE;
+      };
       // Check if file exist and can access it.
       if (!is_file($fileName)) {
-        $mess = 'Unable to validate ' . $fileName . PHP_EOL;
-        $mess .= 'File either does not exist or could not be accessed.';
+        $mess = 'Unable to get ' . $fileName;
+        if (is_dir($fileName)) {
+          $mess .= PHP_EOL . $fileName . ' is a directory and not a file.';
+        } elseif (is_link($fileName)) {
+          $mess .= PHP_EOL . $fileName . ' is a link and not a file.';
+        } elseif (!is_readable($fileName)) {
+          $mess .= PHP_EOL . $fileName . ' is not readable.';
+        } else {
+          $mess .= ' File does not exist.';
+        };
         trigger_error($mess, E_USER_WARNING);
         return FALSE;
       };// if !is_file $fileName ...
       // Make sure actually got file opened.
       if (FALSE === $xr->open($fileName)) {
-        $mess = 'File could not be opened by XMLReader to validate.';
+        $mess = $fileName . ' could not be opened by XMLReader to validate.';
         trigger_error($mess, E_USER_WARNING);
         return FALSE;
       };// if FALSE == $reader->open $fileName ...
@@ -314,6 +339,28 @@ class YapealApiCache {
       // Pass XML data to XMLReader so it can be checked.
       $xr->XML($xml);
     };// else strpos $xml...
+    $canValidate = FALSE;
+    // Build cache file path
+    $cachePath = realpath(YAPEAL_CACHE . $this->section) . DS;
+    if (is_dir($cachePath)) {
+      // Build W3C Schema file name
+      $cacheFile = $cachePath . $this->api . '.xsd';
+      // if schema exist have XMLReader try to use it
+      if (is_file($cacheFile)) {
+        // if schema is ok API can be validated as well.
+        if ($xr->setSchema($cacheFile)) {
+          $canValidate = TRUE;
+        } else {
+          $mess = 'Could not load schema to validate XML for ';
+          $mess .= $this->section . '/' . $this->api;
+          trigger_error($mess, E_USER_NOTICE);
+        };
+      } else {
+        $mess = 'Missing schema for ' . $this->section . '/' . $this->api;
+        $mess .= PHP_EOL . $cacheFile;
+        trigger_error($mess, E_USER_NOTICE);
+      };// else is_file ...
+    };// if is_dir ...
     // XML is now available to start going through it.
     $valid = '';
     $vcount = 0;
@@ -365,15 +412,20 @@ class YapealApiCache {
               return FALSE;
             };// if FALSE === $xr->moveToElement() ...
             $xr->read();
-            $mess = 'Eve API error' . PHP_EOL;
-            $mess .= 'Error code: ' . $code . PHP_EOL;
-            $mess .= 'Error message: ' . (string)$xr->value;
+            $mess = (string)$xr->value;
             // Throw exception
             // Have to use API error code for special API error handling to work.
             throw new YapealApiErrorException($mess, $code);
         };// switch $xr->localName ...
       };// if XMLReader::ELEMENT == $xr->nodeType ...
     };// while $xr ...
+    // Check if XML was well formed after reading everything.
+    if (TRUE === $canValidate && FALSE === $xr->isValid()) {
+      $mess = 'Invalid XML for ';
+      $mess .= $this->section . '/' . $this->api . $this->hash;
+      trigger_error($mess, E_USER_WARNING);
+      return FALSE;
+    };
     // XML passed tests.
     $xr->close();
     return TRUE;

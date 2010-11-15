@@ -47,14 +47,6 @@ define('DS', DIRECTORY_SEPARATOR);
 // Pull in Yapeal revision constants.
 $path = $dir . DS . 'revision.php';
 require_once realpath($path);
-// Make CGI work like CLI.
-if (PHP_SAPI != 'cli') {
-  ini_set('implicit_flush', '1');
-  ini_set('register_argc_argv', '1');
-  defined('STDIN') || define('STDIN', fopen('php://stdin', 'r'));
-  defined('STDOUT') || define('STDOUT', fopen('php://stdout', 'w'));
-  defined('STDERR') || define('STDERR', fopen('php://stderr', 'w'));
-};
 // If being run from command-line look for options there if function available.
 if (function_exists('getopt')) {
   $options = getopt('hVc:d:');
@@ -76,8 +68,8 @@ if (function_exists('getopt')) {
         case 'V':
           $mess = $argv[0] . ' ' . YAPEAL_VERSION . ' (' . YAPEAL_STABILITY . ') ';
           $mess .= YAPEAL_DATE . PHP_EOL;
-          $mess .= "Copyright (C) 2008-2010, Michael Cummings" . PHP_EOL;
-          $mess .= "This program comes with ABSOLUTELY NO WARRANTY." . PHP_EOL;
+          $mess .= 'Copyright (C) 2008-2010, Michael Cummings' . PHP_EOL;
+          $mess .= 'This program comes with ABSOLUTELY NO WARRANTY.' . PHP_EOL;
           $mess .= 'Licensed under the GNU LPGL 3.0 License.' . PHP_EOL;
           $mess .= 'See COPYING and COPYING-LESSER for more details.' . PHP_EOL;
           fwrite(STDOUT, $mess);
@@ -106,48 +98,36 @@ try {
   /* ************************************************************************
    * Generate section list
    * ************************************************************************/
-  // Build sql to get section list from DB.
-  $sql = 'select `activeAPI`,`section`';
-  $sql .= ' from ';
-  $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilSections`';
-  $sql .= ' where isActive=1';
-  try {
-    $con = YapealDBConnection::connect(YAPEAL_DSN);
-    $sections = $con->GetAll($sql);
-  }
-  catch (ADODB_Exception $e) {
-    // Do nothing use observers to log info.
-  }
-  if (count($sections) == 0) {
-    $mess = 'No active sections are available';
-    trigger_error($mess, E_USER_ERROR);
-  };
   $sectionList = FilterFileFinder::getStrippedFiles(YAPEAL_CLASS, 'Section');
   if (count($sectionList) == 0) {
     $mess = 'No section classes were found check path setting';
     trigger_error($mess, E_USER_ERROR);
   };
   // Randomize order in which API sections are tried if there is a list.
-  if (count($sections) > 1) {
-    shuffle($sections);
+  if (count($sectionList) > 1) {
+    shuffle($sectionList);
   };
   // Now take the list of sections and call each in turn.
-  foreach ($sections as $sec) {
-    extract($sec);
-    // Skip if section file not found.
-    if (!in_array(ucfirst($section), $sectionList)) {
-      $mess = 'No class file found for section ' . $section;
-      trigger_error($mess, E_USER_WARNING);
+  foreach ($sectionList as $sec) {
+    try {
+      $section = new Sections($sec, FALSE);
+    }
+    catch (Exception $e) {
+      // Section does not exist in utilSections or other error occurred.
       continue;
-    };// if !in_array(ucfirst($sectionName),...
-    $apis = explode(' ', $activeAPI);
+    }
+    if ($section->isActive == 0) {
+      // Skip inactive sections.
+      continue;
+    }
+    $apis = explode(' ', $section->activeAPI);
     // Skip if there's no active APIs for this section.
     if (count($apis) == 0) {
-      $mess = 'No active APIs listed for section ' . $section;
+      $mess = 'No active APIs listed for section ' . $sec;
       trigger_error($mess, E_USER_NOTICE);
       continue;
     };
-    $class = 'Section' . ucfirst($section);
+    $class = 'Section' . ucfirst($sec);
     try {
       $instance = new $class($apis);
       $instance->pullXML();
@@ -155,6 +135,8 @@ try {
     catch (ADODB_Exception $e) {
       // Do nothing use observers to log info
     }
+    // Going to sleep for a second to let DB time to flush etc between sections.
+    sleep(1);
   };// foreach $section ...
   /* ************************************************************************
    * Final admin stuff
@@ -184,19 +166,20 @@ exit;
  * Function use to show the usage message on command line.
  */
 function usage() {
-  $progname = basename($GLOBALS['argv'][0]);
-  $scriptversion = YAPEAL_VERSION . ' (' . YAPEAL_STABILITY . ') ';
-  $scriptversion .= YAPEAL_DATE . PHP_EOL;
-  $use = <<<USAGE_MESSAGE
-Usage: $progname [-V | [-h] | [-c <config.ini>] [-d <logfile.log>]]
-Options:
-  -c config.ini                        Read configation from 'config.ini'.
-  -d logfile.log                       Save debugging log to 'logfile.log'.
-  -h                                   Show this help.
-  -V                                   Show $progname version and license.
-
-Version $scriptversion
-USAGE_MESSAGE;
-  fwrite(STDOUT, $use);
+  $scriptname = basename($GLOBALS['argv'][0]);
+  $mess = 'Usage: ' . $scriptname;
+  $mess .= ' [-V | [-h] | [-c <config.ini>] [-d <logfile.log>]]' . PHP_EOL;
+  $mess .= 'Options:' . PHP_EOL;
+  $mess .= '  -c config.ini                        ';
+  $mess .= "Read configation from 'config.ini'." . PHP_EOL;
+  $mess .= '  -d logfile.log                       ';
+  $mess .= "Save debugging log to 'logfile.log'." . PHP_EOL;
+  $mess .= '  -h                                   ';
+  $mess .= 'Show this help.' . PHP_EOL;
+  $mess .= '  -V                                   ';
+  $mess .= 'Show version and license of ' . $scriptname . PHP_EOL;
+  $mess .= 'Version ' . YAPEAL_VERSION . ' (' . YAPEAL_STABILITY . ') ';
+  $mess .= YAPEAL_DATE . PHP_EOL;
+  fwrite(STDOUT, $mess);
 };
 ?>

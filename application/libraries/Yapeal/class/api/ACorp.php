@@ -102,18 +102,25 @@ abstract class ACorp extends AApiRequest {
   protected function getProxy() {
     $default = 'http://api.eve-online.com/' . $this->section;
     $default .= '/' . $this->api . '.xml.aspx';
+    $sql = 'select proxy from ';
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'select coalesce(cp.`proxy`,u.`proxy`,sec.`proxy`) as proxy';
-      $sql .= ' from ';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCorporation` as cp,';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` as u,';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilSections` as sec';
-      $sql .= ' where';
-      $sql .= ' sec.`section`=' . $con->qstr($this->section);
-      $sql .= ' and cp.`corporationID`=' . $this->params['corporationID'];
-      $sql .= ' and u.`userID`=' . $this->params['userID'];
-      $result = $con->GetOne($sql);
+      $tables = array(
+        '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCorporation` where `corporationID`=' .
+        $this->params['corporationID'],
+        '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` where `userID`=' .
+        $this->params['userID'],
+        '`' . YAPEAL_TABLE_PREFIX . 'utilSections` where `section`=' .
+        $con->qstr($this->section)
+      );
+      // Look for a set proxy in each table.
+      foreach ($tables as $table) {
+        $result = $con->GetOne($sql . $table);
+        // 4 is random and not magic. It just sounded good.
+        if (strlen($result) > 4) {
+          break;
+        };
+      };// foreach ...
       if (empty($result)) {
         return $default;
       };// if empty $result ...
@@ -174,27 +181,27 @@ abstract class ACorp extends AApiRequest {
             trigger_error($mess, E_USER_WARNING);
           };// if !$corp->store() ...
           break;
-        case 114:// Invalid itemID provided. (Bad POS)
-          $mess = 'Deleted ' . $this->posID['itemID'];
-          $mess .= ' from StarbaseList for ' . $this->ownerID;
-          $tableName = YAPEAL_TABLE_PREFIX . $this->section . 'StarbaseList';
-          try {
-            $con = YapealDBConnection::connect(YAPEAL_DSN);
-            $sql = 'delete from ';
-            $sql .= '`' . $tableName . '`';
-            $sql .= ' where `ownerID`=' . $this->ownerID;
-            $sql .= ' and `itemID`=' . $this->posID['itemID'];
-            $con->Execute($sql);
-          }
-          catch (ADODB_Exception $e) {
-            $mess = 'Could not delete ' . $this->posID['itemID'];
-            $mess .= ' from StarbaseList for ' . $this->ownerID;
-            trigger_error($mess, E_USER_WARNING);
-            // Something wrong with query return FALSE.
-            return FALSE;
-          }
-          trigger_error($mess, E_USER_WARNING);
-          break;
+        //case 114:// Invalid itemID provided. (Bad POS)
+        //  $mess = 'Deleted ' . $this->posID['itemID'];
+        //  $mess .= ' from StarbaseList for ' . $this->ownerID;
+        //  $tableName = YAPEAL_TABLE_PREFIX . $this->section . 'StarbaseList';
+        //  try {
+        //    $con = YapealDBConnection::connect(YAPEAL_DSN);
+        //    $sql = 'delete from ';
+        //    $sql .= '`' . $tableName . '`';
+        //    $sql .= ' where `ownerID`=' . $this->ownerID;
+        //    $sql .= ' and `itemID`=' . $this->posID['itemID'];
+        //    $con->Execute($sql);
+        //  }
+        //  catch (ADODB_Exception $e) {
+        //    $mess = 'Could not delete ' . $this->posID['itemID'];
+        //    $mess .= ' from StarbaseList for ' . $this->ownerID;
+        //    trigger_error($mess, E_USER_WARNING);
+        //    // Something wrong with query return FALSE.
+        //    return FALSE;
+        //  }
+        //  trigger_error($mess, E_USER_WARNING);
+        //  break;
         case 200:// Current security level not high enough. (Wrong API key)
         case 206:// Character must have Accountant or Junior Accountant roles.
         case 207:// Not available for NPC corporations.

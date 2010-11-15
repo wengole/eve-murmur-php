@@ -42,42 +42,30 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
  */
 class YapealDBConnection {
   /**
-   * @var object Hold instance of the class.
-   */
-  private static $instance;
-  /**
    * @var resource List of ADOdb connection resources.
    */
   private static $connections = array();
   /**
-   * Only way to make instance is through
-   * {@link YapealDBConnection::getInstance() getInstance()}.
+   * Static only class.
    */
   private function __construct() {
-    self::$connections = array();
+    $mess = 'Illegally attempted to make instance of ' . __CLASS__;
+    throw new LogicException($mess, 1);
   }// function __construct
   /**
    * No backdoor through cloning either.
    */
-  private function __clone() {}// function __clone
-  /**
-   * Used to get an instance of the class.
-   *
-   * @return YapealDBConnection Returns an instance of the class.
-   */
-  protected static function getInstance() {
-    if (!(self::$instance instanceof self)) {
-      self::$instance = new self();
-    };
-    return self::$instance;
-  }// function getInstance
+  final public function __clone() {
+    $mess = 'Illegally attempted to clone ' . __CLASS__;
+    throw new LogicException($mess , 2);
+  }// function __clone
   /**
    * Use to get a ADOdb connection object.
    *
    * This method will create a new ADOdb connection for each DSN it is passed and
    * return the same connection for any other requests for the same DSN. It was
    * developed to get around some problems with how ADOdb handles connections
-   * that wasn't compatable with what I needed.
+   * that wasn't compatible with what I needed.
    *
    * @param string $dsn An ADOdb compatible connection string.
    *
@@ -89,14 +77,15 @@ class YapealDBConnection {
    * from ADOdb.
    */
   public static function connect($dsn) {
-    $instance = self::getInstance();
     if (empty($dsn) || !is_string($dsn)) {
       throw new InvalidArgumentException('Bad value passed for $dsn');
     };
-    $hash = hash('sha1', $dsn);
-    if (!array_key_exists($hash, self::$connections)) {
+    if (empty(self::$connections)) {
       require_once YAPEAL_CLASS . 'ADODB_Exception.php';
       require_once YAPEAL_ADODB . 'adodb.inc.php';
+    };
+    $hash = hash('sha1', $dsn);
+    if (!array_key_exists($hash, self::$connections)) {
       $ado = NewADOConnection($dsn);
       $ado->debug = FALSE;
       $ado->SetFetchMode(ADODB_FETCH_ASSOC);
@@ -106,20 +95,20 @@ class YapealDBConnection {
     };
     return self::$connections[$hash];
   }// function connect
-/**
- * Function to close and release all existing ADOdb connections.
- *
- * @throws ADODB_Exception Passes through any problem with actual connection
- * from ADOdb.
- */
-public static function releaseAll() {
-  if (!empty(self::$connections)) {
-    foreach (self::$connections as $k => $v) {
-      self::$connections[$k]->Close();
-      self::$connections[$k] = NULL;
-      unset(self::$connections[$k]);
-    };// foreach self::$connections ....
-  };// if !empty...
-}// function releaseAll
+  /**
+   * Function to close and release all existing ADOdb connections.
+   *
+   * @throws ADODB_Exception Passes through any problem with actual connection
+   * from ADOdb.
+   */
+  public static function releaseAll() {
+    if (!empty(self::$connections)) {
+      foreach (self::$connections as $k => $v) {
+        self::$connections[$k]->Close();
+        self::$connections[$k] = NULL;
+        unset(self::$connections[$k]);
+      };// foreach self::$connections ....
+    };// if !empty...
+  }// function releaseAll
 }
 ?>

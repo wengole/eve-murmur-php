@@ -114,56 +114,22 @@ class corpWalletJournal extends ACorp {
           $result = $cache->getCachedApi();
           // If it's not cached need to try to get it.
           if (FALSE === $result) {
-            $postParams = '';
             $proxy = $this->getProxy();
-            // Build http parameter.
-            $http = array('method' => 'POST', 'timeout' => YAPEAL_CURL_TIMEOUT,
-              'url' => $proxy);
-            // Setup for POST query.
-            $http['content'] = http_build_query($apiParams, NULL, '&');
-            $postParams = 'Post parameters: ' . $http['content'] . PHP_EOL;
-            // Setup new cURL connection with options.
-            $ch = new CurlRequest($http);
-            // Try to get XML.
-            $curl = $ch->exec();
-            // Now check for errors.
-            if ($curl['curl_error']) {
-              $mess = 'cURL error for ' . $http['url'] . PHP_EOL;
-              $mess .= $postParams;
-              if (isset($curl['curl_errno'])) {
-                $mess .= 'Error code: ' . $curl['curl_errno'];
-              };// if isset $curl['curl_errno'] ...
-              $mess .= 'Error message: ' . $curl['curl_error'];
-              trigger_error($mess, E_USER_WARNING);
-              $ret = FALSE;
-              break;
-            };// if $curl['curl_error'] ...
-            if (200 != $curl['http_code']) {
-              $mess = 'HTTP error for ' . $http['url'] . PHP_EOL;
-              $mess .= $postParams;
-              $mess .= 'Error code: ' . $curl['http_code'] . PHP_EOL;
-              trigger_error($mess, E_USER_WARNING);
-              $ret = FALSE;
-              break;
-            };// if 200 != $curl['http_code'] ...
-            if (!$curl['body']) {
-              $mess = 'API data empty for ' . $http['url'] . PHP_EOL;
-              $mess .= $postParams;
-              trigger_error($mess, E_USER_WARNING);
-              $ret = FALSE;
-              break;
-            };// if !$curl['body'] ...
-            $result = (string)$curl['body'];
-            // cURL has returned XML don't need it anymore.
-            $ch = NULL;
+            $con = new YapealNetworkConnection();
+            $result = $con->retrieveXml($proxy, $apiParams);
+            // FALSE means there was an error and it has already been report so just
+            // return to caller.
+            if (FALSE === $result) {
+              return FALSE;
+            };
+            // Cache the received XML.
+            $cache->cacheXml($result);
             // Check if XML is valid.
             if (FALSE === $cache->validateXML($result)) {
               // No use going any farther if the XML isn't valid.
               $ret = FALSE;
               break;
             };
-            // Cache the recieved XML.
-            $cache->cacheXml($result);
           };// if FALSE === $result ...
           // Create XMLReader.
           $this->xr = new XMLReader();

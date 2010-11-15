@@ -83,14 +83,36 @@ class SectionChar {
         trigger_error($mess, E_USER_NOTICE);
         return FALSE;
       };// if empty $userList ...
-      // Ok now that we have a list of chars that need updated
-      // we can check API for updates to their information.
-      foreach ($charList as $char) {
-        extract($char);
-        /* **********************************************************************
-         * Per char API pulls
-         * **********************************************************************/
-        $apis = array_intersect($this->apiList, explode(' ', $activeAPI));
+      // Ok now that we have a list of chars we can check which APIs need updated.
+      foreach ($charList as $chr) {
+        $charID = $chr['characterID'];
+        try {
+          // Grab a character object.
+          // Can't update chars that don't exist or cause errors.
+          $char = new RegisteredCharacter($charID, FALSE);
+          if ($char->isActive == 0) {
+            // Skip inactive chars.
+            continue;
+          };
+          $userID = (string)$char->userID;
+          // Grab a user object.
+          // Can't update if user doesn't exist.
+          $user = new RegisteredUser($userID, FALSE);
+        }
+        catch (Exception $e) {
+          // Can't update if any exception happens while getting info.
+          continue;
+        }
+        if ($user->isActive == 0) {
+          // User has to be active as well to get char APIs.
+          continue;
+        };
+        if (isset($user->fullApiKey)) {
+          $apiKey = $user->fullApiKey;
+        } else {
+          $apiKey = $user->limitedApiKey;
+        };
+        $apis = array_intersect($this->apiList, explode(' ', $char->activeAPI));
         if (count($apis) == 0) {
           $mess = 'None of the allowed APIs are currently active for ' . $charID;
           trigger_error($mess, E_USER_NOTICE);
@@ -178,16 +200,9 @@ class SectionChar {
   function getRegisteredCharacters() {
     $con = YapealDBConnection::connect(YAPEAL_DSN);
     /* Generate a list of character(s) we need to do updates for */
-    $sql = 'select chr.`activeAPI`,';
-    $sql .= 'coalesce(u.`fullApiKey`,u.`limitedApiKey`) as apiKey,';
-    $sql .= 'chr.`characterID` as charID,u.`userID`';
+    $sql = 'select `characterID`';
     $sql .= ' from ';
-    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCharacter` as chr,';
-    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` as u';
-    $sql .= ' where';
-    $sql .= ' chr.`userID`=u.`userID`';
-    $sql .= ' and u.`isActive`=1';
-    $sql .= ' and chr.`isActive`=1';
+    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCharacter`';
     $result = $con->GetAll($sql);
     // Randomize order so no one character can starve the rest in case of errors,
     // etc.

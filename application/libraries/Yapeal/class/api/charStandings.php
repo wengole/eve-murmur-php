@@ -67,20 +67,12 @@ class charStandings extends AChar {
    * @return bool Returns TRUE if XML was parsered correctly, FALSE if not.
    */
   protected function parserAPI() {
+    $prefix = 'StandingsFrom';
     try {
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
             switch ($this->xr->localName) {
-              case 'standingsFrom':
-              case 'standingsTo':
-                // Check if empty.
-                if ($this->xr->isEmptyElement == 1) {
-                  break;
-                };// if $this->xr->isEmptyElement ...
-                // Grab node name.
-                $prefix = $this->xr->localName;
-                break;
               case 'rowset':
                 // Check if empty.
                 if ($this->xr->isEmptyElement == 1) {
@@ -122,7 +114,7 @@ class charStandings extends AChar {
    * @return Bool Return TRUE if store was successful.
    */
   protected function rowset($table) {
-    $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst($table);
+    $tableName = YAPEAL_TABLE_PREFIX . $this->section . $table;
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
       $sql = 'delete from `' . $tableName . '`';

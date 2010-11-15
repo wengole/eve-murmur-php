@@ -62,6 +62,11 @@ class Sections extends ALimitedObject implements IGetBy {
    */
   protected $qb;
   /**
+   * List of all section APIs
+   * @var array
+   */
+  private $apiList;
+  /**
    * List of all sections
    * @var array
    */
@@ -100,30 +105,31 @@ class Sections extends ALimitedObject implements IGetBy {
     $this->colTypes = $this->qb->getColumnTypes();
     // Was $id set?
     if (!empty($id)) {
-      // If $id is a number and doesn't exist yet set sectionID with it.
       // If $id has any characters other than 0-9 it's not a sectionID.
       if (0 == strlen(str_replace(range(0,9), '', $id))) {
         if (FALSE === $this->getItemById($id)) {
+          // If $id is a number and doesn't exist yet set sectionID with it.
           if (TRUE == $create) {
             $this->properties['sectionID'] = $id;
-          } else {
-            $mess = 'Unknown section ' . $id;
-            throw new DomainException($mess, 1);
-          };// else ...
-        };
-        // else if it's a string ...
-      } else if (is_string($id)) {
-        if (FALSE === $this->getItemByName($id)) {
-          if (TRUE == $create) {
-            $this->properties['section'] = $id;
           } else {
             $mess = 'Unknown section ' . $id;
             throw new DomainException($mess, 2);
           };// else ...
         };
+        // else if it's a string ...
+      } else if (is_string($id)) {
+        if (FALSE === $this->getItemByName($id)) {
+          // If $id is a string and doesn't exist yet set section with it.
+          if (TRUE == $create) {
+            $this->properties['section'] = $id;
+          } else {
+            $mess = 'Unknown section ' . $id;
+            throw new DomainException($mess, 3);
+          };// else ...
+        };
       } else {
         $mess = 'Parameter $id must be an integer or a string';
-        throw new InvalidArgumentException($mess, 3);
+        throw new InvalidArgumentException($mess, 4);
       };// else ...
     };// if !empty $id ...
   }// function __construct
@@ -134,6 +140,85 @@ class Sections extends ALimitedObject implements IGetBy {
   public function __destruct() {
     $this->con = NULL;
   }// function __destruct
+  /**
+   * Used to add an API to the list in activeAPI.
+   *
+   * @param string $name Name of the API to add without 'account' part i.e.
+   * 'accountCharacters' would just be 'Characters'
+   *
+   * @return bool Returns TRUE if $name already exists else FALSE.
+   *
+   * @throws DomainException If $name not in $this->apiList.
+   */
+  public function addActiveAPI($name) {
+    $this->getApiList();
+    if (!in_array($name, $this->apiList)) {
+      $mess = 'Unknown API: ' . $name;
+      throw new DomainException($mess, 5);
+    };// if !in_array...
+    $apis = explode(' ', $this->properties['activeAPI']);
+    if (in_array($name, $apis)) {
+      $ret = TRUE;
+    } else {
+      $ret = FALSE;
+      $apis[] = $name;
+    };// if isset...
+    $this->properties['activeAPI'] = implode(' ', $apis);
+    return $ret;
+  }// function addActiveAPI
+  /**
+   * Used to delete an API from the list in activeAPI.
+   *
+   * @param string $name Name of the API to delete without 'char' part i.e.
+   * 'charAccountBalance' would just be 'AccountBalance'
+   *
+   * @return bool Returns TRUE if $name existed else FALSE.
+   *
+   * @throws DomainException If $name not in $this->apiList.
+   */
+  public function deleteActiveAPI($name) {
+    if (!in_array($name, $this->apiList)) {
+      $mess = 'Unknown API: ' . $name;
+      throw new DomainException($mess, 6);
+    };// if !in_array...
+    $apis = explode(' ', $this->properties['activeAPI']);
+    $ret = FALSE;
+    foreach ($apis as $k => $v) {
+      if ($name == $v) {
+        $ret = TRUE;
+        unset($apis[$k]);
+        break;
+      };// if $name == $v ...
+    };// foreach $apis ...
+    $this->properties['activeAPI'] = implode(' ', $apis);
+    return $ret;
+  }// function deleteActiveAPI
+  /**
+   * Used to get list of available API classes for a section.
+   *
+   * @return Returns TRUE if $this->apiList is not empty.
+   *
+   * @throws LogicException Throws a LogicException if method is call when
+   * section is unknown.
+   */
+  protected function getApiList() {
+    if (!empty($this->apiList)) {
+      return TRUE;
+    };
+    if (!isset($this->properties['section'])) {
+      $mess = 'Can not add APIs without know which section they belong to';
+      throw new LogicException($mess, 7);
+    };
+    $path = YAPEAL_CLASS . 'api' . DS;
+    $section = $this->properties['section'];
+    $this->apiList = FilterFileFinder::getStrippedFiles($path, $section);
+    if (empty($this->apiList)) {
+      $mess = 'There are no available API classes for ' . $section;
+      trigger_error($mess, E_USER_NOTICE);
+      return FALSE;
+    };
+    return TRUE;
+  }// function getApiList
   /**
    * Used to get section from Sections table by section ID.
    *
@@ -153,7 +238,11 @@ class Sections extends ALimitedObject implements IGetBy {
     catch (ADODB_Exception $e) {
       $this->recordExists = FALSE;
     }
-    return $this->recordExists;
+    // Get list of available APIs for section if possible.
+    if (TRUE === $this->recordExists()) {
+      $this->getApiList();
+    };
+    return $this->recordExists();
   }// function getItemById
   /**
    * Used to get item from table by name.
@@ -167,7 +256,7 @@ class Sections extends ALimitedObject implements IGetBy {
   public function getItemByName($name) {
     if (!in_array(ucfirst($name), $this->sectionList)) {
       $mess = 'Unknown section: ' . $name;
-      throw new DomainException($mess, 4);
+      throw new DomainException($mess, 8);
     };// if !in_array...
     $sql = 'select `' . implode('`,`', array_keys($this->colTypes)) . '`';
     $sql .= ' from `' . $this->tableName . '`';
@@ -180,7 +269,11 @@ class Sections extends ALimitedObject implements IGetBy {
     catch (ADODB_Exception $e) {
       $this->recordExists = FALSE;
     }
-    return $this->recordExists;
+    // Get list of available APIs for section if possible.
+    if (TRUE === $this->recordExists()) {
+      $this->getApiList();
+    };
+    return $this->recordExists();
   }// function getItemByName
   /**
    * Function used to check if database record already existed.

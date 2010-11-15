@@ -44,7 +44,7 @@ if (basename(__FILE__) != basename($_SERVER['PHP_SELF'])) {
 };
 if (version_compare(PHP_VERSION,"5.2.1","<")) {
   fwrite(STDOUT, "old");
-} else if (version_compare(PHP_VERSION,"5.3.2",">")) {
+} else if (version_compare(PHP_VERSION,"5.4",">=")) {
   fwrite(STDOUT, "untested");
 } else {
   fwrite(STDOUT, "tested");

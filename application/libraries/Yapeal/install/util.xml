@@ -83,6 +83,9 @@
       <NOTNULL/>
       <UNSIGNED/>
     </field>
+    <index name="`utilRegisteredCharacter1`">
+      <col>`userID`</col>
+    </index>
     <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="utilRegisteredCorporation">
@@ -104,6 +107,9 @@
       <UNSIGNED/>
     </field>
     <field name="`proxy`" type="C" size="255"/>
+    <index name="`utilRegisteredCorporation1`">
+      <col>`characterID`</col>
+    </index>
     <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="utilRegisteredUser">

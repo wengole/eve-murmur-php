@@ -56,7 +56,7 @@
       <KEY/>
       <UNSIGNED/>
     </field>
-    <field name="`flag`" type="I1" size="3">
+    <field name="`flag`" type="I2" size="5">
       <NOTNULL/>
       <UNSIGNED/>
     </field>
@@ -220,6 +220,16 @@
   </table>
   <table name="charCharacterSheet">
     <descr>Main table for /char/CharacterSheet.xml.aspx</descr>
+    <field name="`allianceID`" type="I8" size="20">
+      <DEFAULT value="0"/>
+      <UNSIGNED/>
+    </field>
+    <field name="`allianceName`" type="C" size="255">
+      <DEFAULT value=""/>
+    </field>
+    <field name="`ancestry`" type="C" size="255">
+      <NOTNULL/>
+    </field>
     <field name="`balance`" type="N" size="17.2">
       <NOTNULL/>
     </field>
@@ -433,7 +443,7 @@
       <NOTNULL/>
       <UNSIGNED/>
     </field>
-    <field name="`installedItemFlag`" type="I1" size="3">
+    <field name="`installedItemFlag`" type="I2" size="5">
       <NOTNULL/>
       <UNSIGNED/>
     </field>
@@ -479,7 +489,7 @@
     <field name="`materialMultiplier`" type="N" size="4.2">
       <NOTNULL/>
     </field>
-    <field name="`outputFlag`" type="I1" size="3">
+    <field name="`outputFlag`" type="I2" size="5">
       <NOTNULL/>
       <UNSIGNED/>
     </field>
@@ -505,7 +515,7 @@
   </table>
   <table name="charItems">
     <descr>Sub table from /char/KillLog.xml.aspx</descr>
-    <field name="`flag`" type="I1" size="3">
+    <field name="`flag`" type="I2" size="5">
       <NOTNULL/>
       <UNSIGNED/>
     </field>
@@ -584,7 +594,7 @@
       <UNSIGNED/>
     </field>
     <field name="`read`" type="I1" size="1">
-      <NOTNULL/>
+      <DEFAULT value="0"/>
       <UNSIGNED/>
     </field>
     <field name="`senderID`" type="I8" size="20">
@@ -600,10 +610,7 @@
       <DEFAULT value="0"/>
       <UNSIGNED/>
     </field>
-    <field name="`toListID`" type="I8" size="20">
-      <DEFAULT value="0"/>
-      <UNSIGNED/>
-    </field>
+    <field name="`toListID`" type="X"/>
     <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="charMarketOrders">
@@ -694,7 +701,7 @@
     <field name="`sentDate`" type="T">
       <NOTNULL/>
     </field>
-    <field name="`typeID`" type="I2" size="3">
+    <field name="`typeID`" type="I2" size="5">
       <NOTNULL/>
       <UNSIGNED/>
     </field>
@@ -871,40 +878,12 @@
     <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="charStandingsToCharacters">
-    <descr>Sub table from /char/Standings.xml.aspx</descr>
-    <field name="`ownerID`" type="I8" size="20">
-      <KEY/>
-      <UNSIGNED/>
-    </field>
-    <field name="`standing`" type="N" size="5.2">
-      <NOTNULL/>
-    </field>
-    <field name="`toID`" type="I8" size="20">
-      <KEY/>
-      <UNSIGNED/>
-    </field>
-    <field name="`toName`" type="C" size="255">
-      <NOTNULL/>
-    </field>
-    <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
+    <descr>Replaced by ContactList</descr>
+    <DROP/>
   </table>
   <table name="charStandingsToCorporations">
-    <descr>Sub table from /char/Standings.xml.aspx</descr>
-    <field name="`ownerID`" type="I8" size="20">
-      <KEY/>
-      <UNSIGNED/>
-    </field>
-    <field name="`standing`" type="N" size="5.2">
-      <NOTNULL/>
-    </field>
-    <field name="`toID`" type="I8" size="20">
-      <KEY/>
-      <UNSIGNED/>
-    </field>
-    <field name="`toName`" type="C" size="255">
-      <NOTNULL/>
-    </field>
-    <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
+    <descr>Replaced by ContactList</descr>
+    <DROP/>
   </table>
   <table name="charVictim">
     <descr>Sub table from /char/KillLog.xml.aspx</descr>
@@ -1056,7 +1035,7 @@
     <query platform="mysql">ALTER TABLE `%%PcharMailMessages` MODIFY `read` BOOLEAN NOT NULL</query>
   </sql>
   <sql prefixmethod="MANUAL">
-    <query platform="mysql">ALTER TABLE `%%PcharMarketOrders` MODIFY `changed` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP</query>
+    <query platform="mysql">ALTER TABLE `%%PcharMarketOrders` MODIFY `changed` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP</query>
     <query platform="mysql">ALTER TABLE `%%PcharMarketOrders` MODIFY `bid` BOOLEAN NOT NULL</query>
   </sql>
   <sql prefixmethod="MANUAL">

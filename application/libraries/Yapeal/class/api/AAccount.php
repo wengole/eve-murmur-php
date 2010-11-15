@@ -101,16 +101,23 @@ abstract class AAccount extends AApiRequest {
   protected function getProxy() {
     $default = 'http://api.eve-online.com/' . $this->section;
     $default .= '/' . $this->api . '.xml.aspx';
+    $sql = 'select proxy from ';
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'select coalesce(u.`proxy`,sec.`proxy`) as proxy';
-      $sql .= ' from ';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` as u,';
-      $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilSections` as sec';
-      $sql .= ' where';
-      $sql .= ' sec.`section`=' . $con->qstr($this->section);
-      $sql .= ' and u.`userID`=' . $con->qstr($this->params['userID']);
-      $result = $con->GetOne($sql);
+      $tables = array(
+        '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` where `userID`=' .
+        $this->params['userID'],
+        '`' . YAPEAL_TABLE_PREFIX . 'utilSections` where `section`=' .
+        $con->qstr($this->section)
+      );
+      // Look for a set proxy in each table.
+      foreach ($tables as $table) {
+        $result = $con->GetOne($sql . $table);
+        // 4 is random and not magic. It just sounded good.
+        if (strlen($result) > 4) {
+          break;
+        };
+      };// foreach ...
       if (empty($result)) {
         return $default;
       };// if empty $result ...

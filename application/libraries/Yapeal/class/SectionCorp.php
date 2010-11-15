@@ -79,18 +79,44 @@ class SectionCorp {
     try {
       $corpList = $this->getRegisteredCorporations();
       if (count($corpList) == 0) {
-        $mess = 'No active users for account section';
+        $mess = 'No active corporations for corp section';
         trigger_error($mess, E_USER_NOTICE);
         return FALSE;
       };// if empty $userList ...
-      // Ok now that we have a list of corp that need updated
-      // we can check API for updates to their information.
-      foreach ($corpList as $corp) {
-        extract($corp);
-        /* **********************************************************************
-        * Per corp API pulls
-        * **********************************************************************/
-        $apis = array_intersect($this->apiList, explode(' ', $activeAPI));
+      // Ok now that we have a list of corps we can check which APIs need updated.
+      foreach ($corpList as $crp) {
+        $corpID = $crp['corporationID'];
+        try {
+          // Grab a corporation object.
+          // Can't update corps that don't exist or cause errors.
+          $corp = new RegisteredCorporation($corpID, FALSE);
+          if ($corp->isActive == 0) {
+            // Skip inactive corps.
+            continue;
+          };
+          $charID = (string)$corp->characterID;
+          // Grab a character object.
+          // Can't update if char doesn't exist or cause errors.
+          $char = new RegisteredCharacter($charID, FALSE);
+          $userID = (string)$char->userID;
+          // Grab a user object.
+          // Can't update if user doesn't exist.
+          $user = new RegisteredUser($userID, FALSE);
+        }
+        catch (Exception $e) {
+          // Can't update if any exception happens while getting info.
+          continue;
+        }
+        if ($user->isActive == 0) {
+          // User has to be active as well to get corp APIs.
+          continue;
+        };
+        if (isset($user->fullApiKey)) {
+          $apiKey = $user->fullApiKey;
+        } else {
+          $apiKey = $user->limitedApiKey;
+        };
+        $apis = array_intersect($this->apiList, explode(' ', $corp->activeAPI));
         if (count($apis) == 0) {
           $mess = 'None of the allowed APIs are currently active for ' . $corpID;
           trigger_error($mess, E_USER_NOTICE);
@@ -178,19 +204,9 @@ class SectionCorp {
   function getRegisteredCorporations() {
     $con = YapealDBConnection::connect(YAPEAL_DSN);
     // Generate a list of corporation(s) we need to do updates for
-    $sql = 'select cp.`activeAPI`,';
-    $sql .= 'coalesce(u.`fullApiKey`,u.`limitedApiKey`) as apiKey,';
-    $sql .= 'cp.`characterID` as charID,cp.`corporationID` as corpID,';
-    $sql .= 'u.`userID`';
+    $sql = 'select `corporationID`';
     $sql .= ' from ';
-    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCorporation` as cp,';
-    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCharacter` as chr,';
-    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredUser` as u';
-    $sql .= ' where';
-    $sql .= ' chr.`userID`=u.`userID`';
-    $sql .= ' and cp.`characterID`=chr.`characterID`';
-    $sql .= ' and u.`isActive`=1';
-    $sql .= ' and cp.`isActive`=1';
+    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilRegisteredCorporation`';
     $result = $con->GetAll($sql);
     // Randomize order so no one corporation can starve the rest in case of
     // errors, etc.

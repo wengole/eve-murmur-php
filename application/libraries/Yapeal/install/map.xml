@@ -41,6 +41,10 @@
       <UNSIGNED/>
     </field>
     <field name="`occupyingFactionName`" type="C" size="255"/>
+    <field name="`owningFactionID`" type="I8" size="20">
+      <UNSIGNED/>
+    </field>
+    <field name="`owningFactionName`" type="C" size="255"/>
     <field name="`solarSystemID`" type="I8" size="20">
       <KEY/>
       <UNSIGNED/>

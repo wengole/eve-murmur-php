@@ -60,5 +60,16 @@ class charUpcomingCalendarEvents extends AChar {
     parent::__construct($params);
     $this->api = str_replace($this->section, '', __CLASS__);
   }// function __construct
+  /**
+   * Dummy API parser for XML.
+   *
+   * This is a dummy parser used to allow caching of the XML even though an
+   * actual parser that processes the API doesn't exist yet.
+   *
+   * @return bool Returns TRUE always.
+   */
+  protected function parserAPI() {
+    return TRUE;
+  }// function parserAPI
 }
 ?>
