@@ -69,6 +69,7 @@ class charCharacterSheet  extends AChar {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . $this->api;
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
+    $qb->setDefault('allianceName', '');
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
       // Empty out old data then upsert (insert) new
@@ -94,9 +95,14 @@ class charCharacterSheet  extends AChar {
               case 'race':
                 // Grab node name.
                 $name = $this->xr->localName;
-                // Move to text node.
-                $this->xr->read();
-                $row[$name] = $this->xr->value;
+                if ($name == 'allianceName' && $this->xr->isEmptyElement == TRUE) {
+                  $row[$name] = '';
+                } else {
+                  // Move to text node.
+                  $this->xr->read();
+                  $value = $this->xr->value;
+                  $row[$name] = $this->xr->value;
+                };
                 break;
               case 'attributes':
               case 'attributeEnhancers':

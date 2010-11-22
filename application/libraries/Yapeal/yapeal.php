@@ -110,7 +110,7 @@ try {
   // Now take the list of sections and call each in turn.
   foreach ($sectionList as $sec) {
     try {
-      $section = new Sections($sec, FALSE);
+      $section = new Sections(lcfirst($sec), FALSE);
     }
     catch (Exception $e) {
       // Section does not exist in utilSections or other error occurred.
