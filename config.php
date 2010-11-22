@@ -4,7 +4,7 @@
 $mysql_user = 'rsm';
 $mysql_pass = 'RSMAdm1n';
 $mysql_host = 'localhost';
-$mysql_db = 'murmur';
+$mysql_db = 'murmur2';
 
 // ICE proxy
 $ice_proxy = 'Meta:tcp -h 127.0.0.1 -p 6502';

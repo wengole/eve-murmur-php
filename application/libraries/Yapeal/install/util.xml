@@ -140,9 +140,10 @@
       <KEY/>
       <UNSIGNED/>
     </field>
-    <field name="`section`" type="C" size="32">
-      <KEY/>
-    </field>
+    <field name="`section`" type="C" size="32"/>
+    <index name="`utilSection1`">
+      <col>`section`</col>
+    </index>
     <opt platform="mysql"> ENGINE=INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="utilXmlCache">

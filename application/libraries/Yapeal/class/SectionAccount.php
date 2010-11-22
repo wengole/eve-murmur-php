@@ -148,8 +148,10 @@ class SectionAccount {
           if ($cu->dontWait() === TRUE) {
             // Set it so we wait a bit before trying again if something goes
             // wrong. If everything works correctly time will be set to new
-            // cachedUntil time from API.
-            $cu->cachedUntil = YAPEAL_START_TIME;
+            // cachedUntil time from API. Added some randomnizing so when there
+            // are major API bugs it does not cause huge spikes in API calls.
+            $time = YAPEAL_MAX_EXECUTE + mt_rand(0, 90);
+            $cu->cachedUntil = gmdate('Y-m-d H:i:s', $time);
             $cu->store();
           } else {
             continue;
@@ -167,7 +169,7 @@ class SectionAccount {
             $mess = 'Yapeal has been working very hard and needs a break';
             trigger_error($mess, E_USER_NOTICE);
             exit;
-          };// if YAPEAL_START_TIME < $cuntil ...
+          };// if YAPEAL_MAX_EXECUTE < time() ...
         };// foreach $apis ...
       };// foreach $userList
     }

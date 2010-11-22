@@ -176,7 +176,7 @@ class CachedUntil extends ALimitedObject implements IGetBy {
     // Hard limited to maximum delay of 6 minutes for randomized pulls.
     // 5 minutes (300) plus a minute from being almost ready last time.
     if (($now - $ctime) > 300) {
-      $mess = 'Over do getting ' . $this->api . ' for ' . $this->ownerID;
+      $mess = 'Overdue getting ' . $this->api . ' for ' . $this->ownerID;
       trigger_error($mess, E_USER_NOTICE);
       return TRUE;
     };// if $now ...
