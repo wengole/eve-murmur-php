@@ -3,15 +3,27 @@
 class Register extends Controller {
 
     private $reg;
+    private $pheal;
+    private $blues;
 
     function Register() {
         parent::Controller();
         $this->load->helper(array('html', 'form'));
         $this->load->library('Registration');
         $this->load->library('Pheal/Pheal.php');
-        spl_autoload_register("Pheal::classload");
-        PhealConfig::getInstance()->cache = new PhealFileCache($pheal_cache);
+        spl_autoload_register('Pheal::classload');
+        PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
         $this->reg = new Registration();
+        $this->db->select('corpAllianceContactList.contactID');
+        $this->db->from('corpAllianceContactList');
+        $this->db->join('corpCorporationSheet', 'corpCorporationSheet.corporationID = corpAllianceContactList.ownerID');
+        $this->db->where('corpCorporationSheet.allianceID', $this->config->item('allianceID'));
+        $this->db->where('standing >', 0);
+        $result = $this->db->get($query, $conn);
+        $this->blues = array();
+        foreach ($query->result_array() as $row) {
+            $blues[] = $row['contactID'];
+        }
     }
 
     function index() {
@@ -39,76 +51,36 @@ class Register extends Controller {
 
     function getCharacters() {
         if (preg_match('/^[0-9]*\z/', $this->reg->userid)) {
-            $pheal = new Pheal($this->reg->userid, $this->reg->apikey);
+            $this->pheal = new Pheal($this->reg->userid, $this->reg->apikey);
         } else {
-            $pheal = new Pheal('123456', 'abc123');
+            $this->pheal = new Pheal('123456', 'abc123');
         }
         // On API errors switch to using cache files only
         try {
-            $characters = $pheal->Characters();
+            $characters = $this->pheal->Characters();
         } catch (Exception $exc) {
-            PhealConfig::getInstance()->cache = new PhealFileCacheForced($pheal_cache);
+            PhealConfig::getInstance()->cache = new PhealFileCacheForced($this->config->item('pheal_cache'));
             try {
-                $characters = $pheal->Characters();
+                $characters = $this->pheal->Characters();
             } catch (Exception $exc) {
-                echo '<h3>You must provide a valid userID and API Key</h3>';
-                echo '<h3>User ID is a 6+ digit number<br />API Key is a 64 character string</h3>';
-                unset($_POST['userid']);
-                unset($_POST['apikey']);
             }
-        }
-        $uname_array = array();
-        $query = "SELECT corpAllianceContactList.contactID FROM corpAllianceContactList
-                    JOIN corpCorporationSheet
-                    ON corpCorporationSheet.corporationID = corpAllianceContactList.ownerID
-                    WHERE corpCorporationSheet.allianceID = $allianceID
-                    AND standing > 0;";
-        $result = mysql_query($query, $conn);
-        $blues = array();
-        while ($row = mysql_fetch_array($result)) {
-            $blues[] = $row['contactID'];
         }
         if (isset($characters)) {
             foreach ($characters->characters as $character) {
-                $pheal->scope = "char";
-                $charsheet = $pheal->CharacterSheet(array('characterID' => $character->characterID));
-                $pheal->scope = "corp";
-                $corpsheet = $pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
-                switch ($corpOnly) {
+                $this->pheal->scope = "char";
+                $charsheet = $this->pheal->CharacterSheet(array('characterID' => $character->characterID));
+                $this->pheal->scope = "corp";
+                $corpsheet = $this->pheal->CorporationSheet(array('corporationID' => $charsheet->corporationID));
+                switch ($this->config->item('corpOnly')) {
                     case true:
-                        if ($corpsheet->corporationID == $corpID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
-                            $uname_array[] = $character->name;
+                        if ($corpsheet->corporationID == $this->config->item('corpID') ||
+                                in_array($corpsheet->corporationID, $this->blues) || in_array($corpsheet->allianceID, $this->blues))
+                            $this->reg->uname_array[] = $character->name;
                         break;
                     default:
-                        if ($corpsheet->allianceID == $allianceID || in_array($corpsheet->corporationID, $blues) || in_array($corpsheet->allianceID, $blues))
-                            $uname_array[] = $character->name;
-                        break;
-                }
-            }
-            if (!empty($uname_array)) {
-                echo "<p>Pick Character:</p>
-			<select id='userselect' name='username'>";
-                foreach ($uname_array as $username) {
-                    if (isset($_POST['username']) && $username == $_POST['username']) {
-                        echo "<option selected='selected'>$username";
-                    } else {
-                        echo "<option>$username";
-                    }
-                }
-                echo "</select>";
-            } else {
-                switch ($corpOnly) {
-                    case true:
-                        $pheal->scope = "eve";
-                        $corpName = $pheal->CharacterName(array("ids" => $corpID));
-                        $corpName = $corpName->characters[0]['name'];
-                        echo "<h3>No characters in or blue to $corpName on account!</h3>";
-                        break;
-                    default:
-                        $pheal->scope = "eve";
-                        $allyName = $pheal->CharacterName(array("ids" => $allianceID));
-                        $allyName = $allyName->characters[0]['name'];
-                        echo "<h3>No characters in or blue to $allyName on account!</h3>";
+                        if ($corpsheet->allianceID == $this->config->item('allianceID') ||
+                                in_array($corpsheet->corporationID, $this->blues) || in_array($corpsheet->allianceID, $this->blues))
+                            $this->reg->uname_array[] = $character->name;
                         break;
                 }
             }
