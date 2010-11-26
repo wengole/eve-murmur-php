@@ -10,16 +10,13 @@ class Register extends Controller {
         parent::Controller();
         $this->load->helper(array('html', 'form'));
         $this->load->library('Registration');
-        $this->load->library('Pheal/Pheal.php');
-        spl_autoload_register('Pheal::classload');
-        PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
         $this->reg = new Registration();
         $this->db->select('corpAllianceContactList.contactID');
         $this->db->from('corpAllianceContactList');
         $this->db->join('corpCorporationSheet', 'corpCorporationSheet.corporationID = corpAllianceContactList.ownerID');
         $this->db->where('corpCorporationSheet.allianceID', $this->config->item('allianceID'));
         $this->db->where('standing >', 0);
-        $result = $this->db->get($query, $conn);
+        $query = $this->db->get();
         $this->blues = array();
         foreach ($query->result_array() as $row) {
             $blues[] = $row['contactID'];
@@ -51,9 +48,9 @@ class Register extends Controller {
 
     function getCharacters() {
         if (preg_match('/^[0-9]*\z/', $this->reg->userid)) {
-            $this->pheal = new Pheal($this->reg->userid, $this->reg->apikey);
+            $this->load->library('pheal/Pheal', array('userid' => $this->reg->userid, 'key' => $this->reg->apikey));
         } else {
-            $this->pheal = new Pheal('123456', 'abc123');
+            $this->load->library('pheal/Pheal', array('userid' => '123456', 'key' => 'abc123'));
         }
         // On API errors switch to using cache files only
         try {
@@ -63,6 +60,7 @@ class Register extends Controller {
             try {
                 $characters = $this->pheal->Characters();
             } catch (Exception $exc) {
+
             }
         }
         if (isset($characters)) {
