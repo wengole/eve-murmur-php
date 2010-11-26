@@ -57,11 +57,17 @@ class Pheal
      * @param string $key the EVE apikey
      * @param string $scope scope to use, defaults to account. scope can be changed during usage by modifycation of public attribute "scope"
      */
-    public function __construct($userid, $key, $scope="account")
+    public function __construct($params)
     {
-        $this->userid = $userid;
-        $this->key = $key;
-        $this->scope = $scope;
+        var_dump($params);
+        $this->userid = $params['userid'];
+        $this->key = $params['key'];
+        if (array_key_exists('scope', $params)) {
+            $this->scope = $params['scope'];
+        } else {
+            $this->scope = 'eve';
+        }
+        echo "All done<br />";
     }
 
     /**
