@@ -34,17 +34,31 @@ class PhealResult
      * @var string
      */
     public $request_time;
+    
+    /**
+     * time at which the API got the request as unixtimestamp
+     * @var int
+     
+     */
+    public $request_time_unixtime;
+    
     /**
      * time till the cache should hold this result
      * @var string
      */
     public $cached_until;
+    
+    /**
+     * time till the cache should hold this result
+     * @var string
+     */
+    public $cached_until_unixtime;
 
     /**
      * root element of the result
      * @var PhealElement
      */
-    private $element = null;
+    private $_element = null;
 
     /**
      * initializes the PhealResult
@@ -52,11 +66,22 @@ class PhealResult
      */
     public function __construct($xml)
     {
+        // switch to UTC
+        $oldtz	= date_default_timezone_get();
+        date_default_timezone_set('UTC');
+        
         $this->request_time = (string) $xml->currentTime;
         $this->cached_until = (string) $xml->cachedUntil;
+        $this->request_time_unixtime = (int) strtotime($xml->currentTime);
+        $this->cached_until_unixtime = (int) strtotime($xml->cachedUntil);
+        
+        // switch back to normal time
+        date_default_timezone_set($oldtz);
+
+	// error detection
         if($xml->error)
             throw new PhealAPIException($xml->error["code"], (String) $xml->error);
-        $this->element = PhealElement::parse_element($xml->result);
+        $this->_element = PhealElement::parse_element($xml->result);
     }
 
     /**
@@ -66,6 +91,6 @@ class PhealResult
      */
     public function  __get($name)
     {
-        return $this->element->$name;
+        return $this->_element->$name;
     }
 }
