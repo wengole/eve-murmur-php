@@ -36,14 +36,33 @@ class PhealFileCache implements PhealCacheInterface
     protected $basepath;
 
     /**
+     * various options for the filecache
+     * valid keys are: delimiter, umask, umask_directory
+     * @var array
+     */
+    protected $options = array(
+        'delimiter' => ':',
+        'umask' => 0666,
+        'umask_directory' => 0777
+    );
+
+    /**
      * construct PhealFileCache,
      * @param string $basepath optional string on where to store files, defaults to the current/users/home/.pheal/cache/
+     * @param array $options optional config array, valid keys are: delimiter, umask, umask_directory
      */
-    public function __construct($basepath = false)
+    public function __construct($basepath = false, $options = array())
     {
         if(!$basepath)
-            $basepath = $_ENV["HOME"]. "/.pheal/cache/";
+            $basepath = getenv('HOME'). "/.pheal/cache/";
         $this->basepath = $basepath;
+
+        // Windows systems don't allow : as part of the filename
+        $this->options['delimiter'] = (strtoupper (substr(PHP_OS, 0,3)) == 'WIN') ? "#" : ":";
+
+        // add options
+        if(is_array($options) && count($options))
+            $this->options = array_merge($this->options, $options);
     }
 
     /**
@@ -58,18 +77,22 @@ class PhealFileCache implements PhealCacheInterface
     protected function filename($userid, $apikey, $scope, $name, $args)
     {
         $argstr = "";
+
         foreach($args as $key => $val)
         {
             if(strlen($val) < 1)
                 unset($args[$key]);
-            else
-                $argstr .= "$key:$val:";
+            elseif($key != 'userid' && $key != 'apikey')
+                $argstr .= $key . $this->options['delimiter'] . $val . $this->options['delimiter'];
         }
         $argstr = substr($argstr, 0, -1);
-        $filename = "Request_" . $argstr . ".xml";
-        $filepath = $this->basepath . "$userid/$apikey/$scope/$name/";
-        if(!file_exists($filepath))
-            mkdir($filepath, 0777, true);
+        $filename = "Request" . ($argstr ? "_" . $argstr : "") . ".xml";
+        $filepath = $this->basepath . ($userid ? "$userid/$apikey/$scope/$name/" : "public/public/$scope/$name/");
+        if(!file_exists($filepath)) {
+            $oldUmask = umask(0);
+            mkdir($filepath, $this->options['umask_directory'], true);
+            umask($oldUmask);
+        }
         return $filepath . $filename;
     }
 
@@ -136,8 +159,7 @@ class PhealFileCache implements PhealCacheInterface
     public function save($userid,$apikey,$scope,$name,$args,$xml) 
     {
         $filename= $this->filename($userid, $apikey, $scope, $name, $args);
-        $fp = fopen($filename, "w");
-        fwrite($fp, $xml);
-        fclose($fp);
+        file_put_contents($filename, $xml);
+        chmod($filename, $this->options['umask']);
     }
 }

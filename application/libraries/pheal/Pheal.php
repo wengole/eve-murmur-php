@@ -1,7 +1,7 @@
 <?php
 /*
  MIT License
- Copyright (c) 2010 Peter Petermann
+ Copyright (c) 2010 Peter Petermann, Daniel Hoffend
 
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -33,7 +33,7 @@ class Pheal
     /**
      * Version container
      */
-    public static $version = "0.0.6";
+    public static $version = "0.0.9";
 
     /**
      * @var int
@@ -50,6 +50,12 @@ class Pheal
      * @var String 
      */
     public $scope;
+    
+    /**
+     * Result of the last XML request, so application can use the raw xml data
+     * @var String 
+     */
+    public $xml;
 
     /**
      * creates new Pheal API object
@@ -59,7 +65,6 @@ class Pheal
      */
     public function __construct($params)
     {
-        var_dump($params);
         $this->userid = $params['userid'];
         $this->key = $params['key'];
         if (array_key_exists('scope', $params)) {
@@ -67,7 +72,6 @@ class Pheal
         } else {
             $this->scope = 'eve';
         }
-        echo "All done<br />";
     }
 
     /**
@@ -76,9 +80,10 @@ class Pheal
      * @param array $arguments an array of arguments
      * @return PhealResult
      */
-    public function  __call($name,  $arguments)
+    public function  __call($name, $arguments)
     {
-        if(count($arguments) < 1) $arguments[0] = array();
+        if(count($arguments) < 1 || !is_array($arguments[0]))
+            $arguments[0] = array();
         $scope = $this->scope;
         return $this->request_xml($scope, $name, $arguments[0]); // we only use the
         //first argument params need to be passed as an array, due to naming
@@ -93,29 +98,167 @@ class Pheal
      */
     private function request_xml($scope, $name, $opts)
     {
-        
         $opts = array_merge(PhealConfig::getInstance()->additional_request_parameters, $opts);
-        if(!$xml = PhealConfig::getInstance()->cache->load($this->userid,$this->key,$scope,$name,$opts))
+        if(!$this->xml = PhealConfig::getInstance()->cache->load($this->userid,$this->key,$scope,$name,$opts))
         {
             $url = PhealConfig::getInstance()->api_base . $scope . '/' . $name . ".xml.aspx";
-            $url .= "?userid=" . $this->userid . "&apikey=" . $this->key;
-            foreach($opts as $optname => $value)
-            {
-                $url .= "&" . $optname . "=" . urlencode($value);
-            }
+            if($this->userid) $opts['userid'] = $this->userid;
+            if($this->key) $opts['apikey'] = $this->key;
+            
             try {
-                $xml = join('', file($url));
-                $element = new SimpleXMLElement($xml);
+                // start measure the response time
+                PhealConfig::getInstance()->log->start();
+
+                // request
+                if(PhealConfig::getInstance()->http_method == "curl" && function_exists('curl_init'))
+                    $this->xml = self::request_http_curl($url,$opts);
+                else
+                    $this->xml = self::request_http_file($url,$opts);
+
+                // stop measure the response time
+                PhealConfig::getInstance()->log->stop();
+
+                // parse
+                $element = new SimpleXMLElement($this->xml);
+
             } catch(Exception $e) {
+                // log + throw error
+                PhealConfig::getInstance()->log->errorLog($scope,$name,$opts,$e->getCode() . ': ' . $e->getMessage());
                 throw new PhealException('API Date could not be read / parsed, orginial exception: ' . $e->getMessage());
             }
-            PhealConfig::getInstance()->cache->save($this->userid,$this->key,$scope,$name,$opts,$xml);
+            PhealConfig::getInstance()->cache->save($this->userid,$this->key,$scope,$name,$opts,$this->xml);
+            
+            // archive+save only non-error api calls + logging
+            if(!$element->error) {
+                PhealConfig::getInstance()->log->log($scope,$name,$opts);
+                PhealConfig::getInstance()->archive->save($this->userid,$this->key,$scope,$name,$opts,$this->xml);
+            } else {
+                PhealConfig::getInstance()->log->errorLog($scope,$name,$opts,$element->error['code'] . ': ' . $element->error);
+            }
         } else {
-            $element = new SimpleXMLElement($xml);
+            $element = new SimpleXMLElement($this->xml);
         }
         return new PhealResult($element);
     }
 
+    /**
+     * method will do the actual http call using curl libary. 
+     * you can choose between POST/GET via config.
+     * will throw Exception if http request/curl times out or fails
+     * @param String $url url beeing requested
+     * @param array $opts an array of query paramters
+     * @return string raw http response
+     */
+    public static function request_http_curl($url,$opts)
+    {
+        // init curl
+        $curl = curl_init();
+
+        // custom user agent
+        if(($http_user_agent = PhealConfig::getInstance()->http_user_agent) != false)
+            curl_setopt($curl, CURLOPT_USERAGENT, $http_user_agent);
+        
+        // custom outgoing ip address
+        if(($http_interface_ip = PhealConfig::getInstance()->http_interface_ip) != false)
+            curl_setopt($curl, CURLOPT_INTERFACE, $http_interface_ip);
+            
+        // use post for params
+        if(count($opts) && PhealConfig::getInstance()->http_post)
+        {
+            curl_setopt($curl, CURLOPT_POST, true);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $opts);
+        }
+        // else build url parameters
+        elseif(count($opts))
+        {
+            $url .= "?" . http_build_query($opts);
+        }
+        
+        if(($http_timeout = PhealConfig::getInstance()->http_timeout) != false)
+            curl_setopt($curl, CURLOPT_TIMEOUT, $http_timeout);
+        
+        // curl defaults
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_ENCODING, "");
+
+
+        
+        // call
+        $result	= curl_exec($curl);
+        $errno = curl_errno($curl);
+        $error = curl_error($curl);
+        curl_close($curl);
+
+        if($errno)
+            throw new Exception($error, $errno);
+        else
+            return $result;
+    }
+    
+    /**
+     * method will do the actual http call using file()
+     * remember: on some installations, file_get_contents(url) might not be available due to
+     * restrictions via allow_url_fopen
+     * @param String $url url beeing requested
+     * @param array $opts an array of query paramters
+     * @return string raw http response
+     */
+    public static function request_http_file($url,$opts)
+    {
+        $options = array();
+        
+        // set custom user agent
+        if(($http_user_agent = PhealConfig::getInstance()->http_user_agent) != false)
+            $options['http']['user_agent'] = $http_user_agent;
+        
+        // set custom http timeout
+        if(($http_timeout = PhealConfig::getInstance()->http_timeout) != false)
+            $options['http']['timeout'] = $http_timeout;
+        
+        // use post for params
+        if(count($opts) && PhealConfig::getInstance()->http_post)
+        {
+            $options['http']['method'] = 'POST';
+            $options['http']['content'] = http_build_query($opts);
+        }
+        // else build url parameters
+        elseif(count($opts))
+        {
+            $url .= "?" . http_build_query($opts);
+        }
+
+        // set track errors. needed for $php_errormsg
+        $oldTrackErrors = ini_get('track_errors');
+        ini_set('track_errors', true);
+
+        // create context with options and request api call
+        // suppress the 'warning' message which we'll catch later with $php_errormsg
+        if(count($options)) 
+        {
+            $context = stream_context_create($options);
+            $result = @file_get_contents($url, false, $context);
+        } else {
+            $result = @file_get_contents($url);
+        }
+
+         // throw error
+        if($result === false) {
+            $message = ($php_errormsg ? $php_errormsg : 'HTTP Request Failed');
+            
+            // set track_errors back to the old value
+            ini_set('track_errors',$oldTrackErrors);
+
+            throw new Exception($message);
+
+        // return result
+        } else {
+            // set track_errors back to the old value
+            ini_set('track_errors',$oldTrackErrors);
+            return $result;
+        }
+    }
+    
     /**
      * static method to use with spl_autoload_register
      * for usage include Pheal.php and then spl_autoload_register("Pheal::classload");
