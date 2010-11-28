@@ -1,12 +1,24 @@
 <?php
 
+require_once 'Ice.php';
+require_once APPPATH . 'libraries/Murmur_1.2.2.php';
+
 class Register extends Controller {
 
     private $reg;
     private $blues;
+    private $server;
 
-    function Register() {
+    function __construct() {
         parent::Controller();
+        $initData = new Ice_InitializationData;
+        $initData->properties = Ice_createProperties();
+        $initData->properties->setProperty('Ice.ImplicitContext', 'Shared');
+        $ICE = Ice_initialize($initData);
+        $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
+        $this->server = $meta->getServer($this->config->item('vServerID'));
+        $this->reg->host = $this->server->getConf('host');
+        $this->reg->port = $this->server->getConf('port');
         $this->load->helper(array('html', 'form'));
         $this->load->library('Registration');
         $this->reg = new Registration();
@@ -18,7 +30,7 @@ class Register extends Controller {
         $query = $this->db->get();
         $this->blues = array();
         foreach ($query->result_array() as $row) {
-            $blues[] = $row['contactID'];
+            $this->blues[] = $row['contactID'];
         }
     }
 
@@ -32,21 +44,29 @@ class Register extends Controller {
     function add() {
         $this->reg->userid = $this->input->post('userid');
         $this->reg->apikey = $this->input->post('apikey');
-        $this->reg->username = $this->input->post('username');
-        if (empty($this->reg->uname_array) && !empty($this->reg->userid) && !empty($this->reg->apikey))
-            $this->reg->uname_array = $this->getCharacters();
-        var_dump($this->reg->uname_array);
-        if (!empty($this->reg->username))
-            $this->reg->selected_user = $this->reg->getSelectedUser();
+        $this->reg->selected_user = $this->input->post('username');
+        if ($this->input->post('apikey') != $this->reg->apikey || $this->input->post('userid') != $this->reg->userid
+                || (empty($this->reg->uname_array) && !empty($this->reg->userid) && !empty($this->reg->apikey)))
+            $this->_getCharacters();
+        if (!empty($this->reg->uname_array))
+            $this->reg->username = $this->reg->getSelectedUser();
         $this->reg->password = $this->input->post('password');
         $this->reg->password2 = $this->input->post('password2');
-        $data['main_content'] = 'registerview';
-        $data['title'] = 'Mumble Registration';
-        $data['data'] = $this->reg;
-        $this->load->view('includes/template', $data);
+        if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->reg->password) && $this->reg->password != ""
+                && $this->reg->password == $this->reg->password2) {
+            $data['main_content'] = 'registeredview';
+            $data['title'] = 'Mumble Registration';
+            $data['data'] = $this->reg;
+            $this->load->view('includes/template', $data);
+        } else {
+            $data['main_content'] = 'registerview';
+            $data['title'] = 'Mumble Registration';
+            $data['data'] = $this->reg;
+            $this->load->view('includes/template', $data);
+        }
     }
 
-    function getCharacters() {
+    function _getCharacters() {
         if (preg_match('/^[0-9]*\z/', $this->reg->userid)) {
             $params = array('userid' => $this->reg->userid, 'key' => $this->reg->apikey);
             $this->load->library('pheal/Pheal', $params);
@@ -55,19 +75,21 @@ class Register extends Controller {
             $this->load->library('pheal/Pheal', $params);
         }
         spl_autoload_register("Pheal::classload");
+        PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
+        PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
         // On API errors switch to using cache files only
         try {
+            $this->pheal->scope = 'account';
             $characters = $this->pheal->Characters();
         } catch (Exception $exc) {
             PhealConfig::getInstance()->cache = new PhealFileCacheForced($this->config->item('phealCache'));
             try {
                 $characters = $this->pheal->Characters();
             } catch (Exception $exc) {
-                var_dump($params);
-                echo $exc->getMessage()."<br />".$exc->getTraceAsString();
+                // TODO: Error handling for no cache
             }
         }
-        //var_dump($characters);
+
         if (isset($characters)) {
             foreach ($characters->characters as $character) {
                 $this->pheal->scope = "char";
@@ -78,12 +100,13 @@ class Register extends Controller {
                     case true:
                         if ($corpsheet->corporationID == $this->config->item('corpID') ||
                                 in_array($corpsheet->corporationID, $this->blues) || in_array($corpsheet->allianceID, $this->blues))
-                            $this->reg->uname_array[] = $character->name;
+                            $this->reg->addUsername($character->name);
+                        echo "Blue to corp";
                         break;
                     default:
                         if ($corpsheet->allianceID == $this->config->item('allianceID') ||
                                 in_array($corpsheet->corporationID, $this->blues) || in_array($corpsheet->allianceID, $this->blues))
-                            $this->reg->uname_array[] = $character->name;
+                            $this->reg->addUsername($character->name);
                         break;
                 }
             }

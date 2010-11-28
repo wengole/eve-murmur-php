@@ -1,4 +1,5 @@
-<?php
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed'); 
+
 class Registration {
 
     public $uname_array = array();
@@ -8,11 +9,15 @@ class Registration {
     public $username;
     public $password;
     public $password2;
+    public $host;
+    public $port;
 
-    public function getSelected_user() {
-        //TODO: Set selected_user to the index of username in uname_array
-        return $this->selected_user;
+    public function getSelectedUser() {
+        return $this->uname_array[$this->selected_user];
     }
 
+    public function addUsername($username) {
+        $this->uname_array[] = $username;
+    }
 }
 ?>
