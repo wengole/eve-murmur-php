@@ -22,7 +22,7 @@
     <?= form_button(array(
             'name' => 'save',
             'type' => 'submit',
-            'content' => '<img src="images/apply2.png" />Submit',
+            'content' => img('images/apply2.png').'Submit',
             'class' => 'positive')
         ); ?>
     </div>
