@@ -11,6 +11,7 @@ class Registration {
     public $password2;
     public $host;
     public $port;
+    public $error_message;
 
     public function getSelectedUser() {
         return $this->uname_array[$this->selected_user];

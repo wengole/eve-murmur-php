@@ -18,6 +18,9 @@
         <p>Confirm password:</p>
         <?= form_password(array('name' => 'password2', 'class' => 'userinput')); ?>
     <?php endif; ?>
+    <?php if (!empty($error_message)): ?>
+        <?= $error_message; ?>
+    <?php endif; ?>
     <div class='buttons'>
     <?= form_button(array(
             'name' => 'save',
