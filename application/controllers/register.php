@@ -57,7 +57,6 @@ class Register extends Controller {
             $data['main_content'] = 'registeredview';
             $data['title'] = 'Mumble Registration';
             $data['data'] = $this->reg;
-            var_dump($data);
             $this->load->view('includes/template', $data);
         } else {
             $data['main_content'] = 'registerview';
