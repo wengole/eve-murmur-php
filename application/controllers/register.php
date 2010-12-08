@@ -17,8 +17,6 @@ class Register extends Controller {
         $ICE = Ice_initialize($initData);
         $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
         $this->server = $meta->getServer($this->config->item('vServerID'));
-        $this->reg->host = $this->server->getConf('host');
-        $this->reg->port = $this->server->getConf('port');
         $this->load->helper(array('html', 'form'));
         $this->load->library('Registration');
         $this->reg = new Registration();
@@ -54,9 +52,12 @@ class Register extends Controller {
         $this->reg->password2 = $this->input->post('password2');
         if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->reg->password) && $this->reg->password != ""
                 && $this->reg->password == $this->reg->password2) {
+            $this->reg->host = $this->server->getConf('host');
+            $this->reg->port = $this->server->getConf('port');
             $data['main_content'] = 'registeredview';
             $data['title'] = 'Mumble Registration';
             $data['data'] = $this->reg;
+            var_dump($data);
             $this->load->view('includes/template', $data);
         } else {
             $data['main_content'] = 'registerview';
