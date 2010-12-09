@@ -5,12 +5,12 @@
     <br />
     <?= form_open('register/add'); ?>
     <p>User ID:</p>
-    <?= form_input(array('name' => 'userid', 'id' => 'userid', 'class' => 'userinput', 'value' => $userid)); ?>
+    <?= form_input(array('name' => 'userid', 'id' => 'userid', 'class' => 'userinput', 'value' => $userID)); ?>
     <p>Limited API:</p>
-    <?= form_input(array('name' => 'apikey', 'id' => 'apikey', 'class' => 'userinput', 'value' => $apikey)); ?>
-    <?php if (!empty($uname_array)): ?>
+    <?= form_input(array('name' => 'apikey', 'id' => 'apikey', 'class' => 'userinput', 'value' => $apiKey)); ?>
+    <?php if (!empty($unameArray)): ?>
         <p>Pick Character:</p>
-    <?= form_dropdown('username', $uname_array, $selected_user, 'class="userselect"'); ?>
+    <?= form_dropdown('username', $unameArray, $selectedUser, 'class="userselect"'); ?>
     <?php endif; ?>
     <?php if (!empty($username) || $password != $password2): ?>
         <p>Choose a password:</p>
@@ -18,8 +18,8 @@
         <p>Confirm password:</p>
         <?= form_password(array('name' => 'password2', 'class' => 'userinput')); ?>
     <?php endif; ?>
-    <?php if (!empty($error_message)): ?>
-        <?= $error_message; ?>
+    <?php if (!empty($errorMessage)): ?>
+        <?= $errorMessage; ?>
     <?php endif; ?>
     <div class='buttons'>
     <?= form_button(array(
