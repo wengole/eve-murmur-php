@@ -60,6 +60,7 @@ class Register extends Controller {
                     if (preg_match('/.*' . $this->reg->username . '/', $username))
                         throw new Murmur_InvalidUserException;
                 }
+                $userinfo = array($this->reg->username, null, null, null, $this->reg->password);
                 $murmur_userid = $this->server->registerUser($userinfo);
                 $data['main_content'] = 'registeredview';
                 $data['title'] = 'Mumble Registration';
