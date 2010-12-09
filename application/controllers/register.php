@@ -55,7 +55,6 @@ class Register extends Controller {
             $this->reg->host = $this->server->getConf('host');
             $this->reg->port = $this->server->getConf('port');
             try {
-                echo "Getting users\n";
                 $reg_users = $this->server->getRegisteredUsers('');
                 foreach ($reg_users as $userid => $username) {
                     if (preg_match('/.*' . $this->reg->username . '/', $username))
