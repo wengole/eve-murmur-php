@@ -1,5 +1,8 @@
 <div id="apicontent">
     <h1>Successfully registered <?=$username?></h1>
+    <?php if (!empty($successMessage)): ?>
+        <?= $successMessage ?>
+    <?php endif; ?>
     <p>Please connect to: <?=$host?></p>
     <p>Port: <?=$port?></p>
     <p>or click <a href="mumble://<?=str_replace(".", "%2E", rawurlencode($username)) . ':'

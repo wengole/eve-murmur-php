@@ -3,6 +3,9 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
+require_once 'Ice.php';
+require_once APPPATH . 'libraries/Murmur_1.2.2.php';
+
 class Register extends Controller {
 
     function __construct() {
@@ -22,15 +25,20 @@ class Register extends Controller {
         $this->Registration->setUserID($this->input->post('userid'));
         $this->Registration->setApikey($this->input->post('apikey'));
         $this->Registration->setSelectedUser($this->input->post('username'));
+        $userID = $this->Registration->getUserID();
+        $apiKey = $this->Registration->getApiKey();
         if ($this->input->post('apikey') != $this->Registration->getApiKey() || $this->input->post('userid') != $this->Registration->getUserID()
-                || (empty($this->Registration->getUnameArray()) && !empty($this->Registration->getUserID()) && !empty($this->Registration->getApiKey())))
+                || (empty($unameArray) && !empty($userID) && !empty($apiKey))) {
             $this->Registration->populateCharacters();
-        if (!empty($this->Registration->getUnameArray))
+            $unameArray = $this->Registration->getUnameArray();
+        }
+        if (!empty($unameArray)) {
             $this->Registration->setUsername($this->Registration->getSelectedUser());
+        }
         $this->Registration->setPassword($this->input->post('password'));
         $this->Registration->setPassword2($this->input->post('password2'));
-        if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->Registration->getPassword) && $this->Registration->getPassword != ""
-                && $this->Registration->getPassword == $this->Registration->getPassword2) {
+        if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->Registration->getPassword()) && $this->Registration->getPassword() != ""
+                && $this->Registration->getPassword() == $this->Registration->getPassword2()) {
             $this->Registration->registerUser();
             $data['title'] = 'Mumble Registration';
             $data['data'] = $this->_getData();
@@ -59,7 +67,8 @@ class Register extends Controller {
             'password2' => $this->Registration->getPassword2(),
             'errorMessage' => $this->Registration->getErrorMessage(),
             'host' => $this->Registration->getHost(),
-            'port' => $this->Registration->getPort()
+            'port' => $this->Registration->getPort(),
+            'successMessage' => $this->Registration->getSuccessMessage()
         );
         return $data;
     }

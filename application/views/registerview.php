@@ -10,16 +10,14 @@
     <?= form_input(array('name' => 'apikey', 'id' => 'apikey', 'class' => 'userinput', 'value' => $apiKey)); ?>
     <?php if (!empty($unameArray)): ?>
         <p>Pick Character:</p>
-    <?= form_dropdown('username', $unameArray, $selectedUser, 'class="userselect"'); ?>
-    <?php endif; ?>
-    <?php if (!empty($username) || $password != $password2): ?>
+        <?= form_dropdown('username', $unameArray, $selectedUser, 'class="userselect"'); ?>
         <p>Choose a password:</p>
         <?= form_password(array('name' => 'password', 'class' => 'userinput')); ?>
         <p>Confirm password:</p>
         <?= form_password(array('name' => 'password2', 'class' => 'userinput')); ?>
     <?php endif; ?>
     <?php if (!empty($errorMessage)): ?>
-        <?= $errorMessage; ?>
+        <?= $errorMessage ?>
     <?php endif; ?>
     <div class='buttons'>
     <?= form_button(array(
