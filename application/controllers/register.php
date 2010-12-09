@@ -55,6 +55,7 @@ class Register extends Controller {
             $this->reg->host = $this->server->getConf('host');
             $this->reg->port = $this->server->getConf('port');
             try {
+                echo "Getting users\n";
                 $reg_users = $this->server->getRegisteredUsers('');
                 foreach ($reg_users as $userid => $username) {
                     if (preg_match('/.*' . $this->reg->username . '/', $username))
@@ -66,20 +67,23 @@ class Register extends Controller {
                 $data['data'] = $this->reg;
                 $this->load->view('includes/template', $data);
             } catch (Murmur_ServerBootedException $exc) {
-                $this->reg->error_message = "<div id='apicontent'><h4>Server not running.</h4></div>";
+                $this->reg->error_message = "<h4>Server not running.</h4>";
                 $data['main_content'] = 'registerview';
                 $data['title'] = 'Mumble Registration';
                 $data['data'] = $this->reg;
+                $this->load->view('includes/template', $data);
             } catch (Murmur_InvalidSecretException $exc) {
-                $this->reg->error_message = "<div id='apicontent'><h4>Wrong ICE secret.</h4></div>";
+                $this->reg->error_message = "<h4>Wrong ICE secret.</h4>";
                 $data['main_content'] = 'registerview';
                 $data['title'] = 'Mumble Registration';
                 $data['data'] = $this->reg;
+                $this->load->view('includes/template', $data);
             } catch (Murmur_InvalidUserException $exc) {
-                $this->reg->error_message = "<div id='apicontent'><h4>Username already exists</h4></div>";
+                $this->reg->error_message = "><h4>Username already exists</h4>";
                 $data['main_content'] = 'registerview';
                 $data['title'] = 'Mumble Registration';
                 $data['data'] = $this->reg;
+                $this->load->view('includes/template', $data);
             }
         } else {
             $data['main_content'] = 'registerview';
