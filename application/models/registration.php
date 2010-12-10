@@ -92,7 +92,7 @@ class Registration extends Model {
             $this->db->delete('utilRegisteredCharacter', array('characterID' => $charID));
             $this->db->insert('utilRegisteredCharacter', $data);
             $data = array(
-                'activeAPI' => 'AccountBalance AssetList ContactList CorporationSheet ContainerLog IndustryJobs KillLog MarketOrders Medals MemberMedals MemberTracking OutpostList Standings StarbaseList StarbaseDetail WalletJournal WalletTransactions',
+                'activeAPI' => 'CorporationSheet',
                 'isActive' => '1',
                 'characterID' => $charID,
                 'corporationID' => $corpID,

@@ -54,12 +54,92 @@ class User extends Model {
         $this->load->library('pheal/Pheal', $params);
     }
 
+    public function setBlues() {
+        $this->db->select('corpAllianceContactList.contactID');
+        $this->db->from('corpAllianceContactList');
+        $this->db->join('corpCorporationSheet', 'corpCorporationSheet.corporationID = corpAllianceContactList.ownerID');
+        $this->db->where('corpCorporationSheet.allianceID', $this->config->item('allianceID'));
+        $this->db->where('standing >', 0);
+        $query = $this->db->get();
+        $this->blues = array();
+        foreach ($query->result_array() as $row) {
+            $this->blues[] = $row['contactID'];
+        }
+    }
+
+    public function getBlues() {
+        if (empty($this->blues))
+            $this->setBlues();
+        return $this->blues;
+    }
+
     public function getMurmurUsers() {
+        if (empty($this->murmurUsers))
+            $this->setMurmurUsers();
         return $this->murmurUsers;
     }
 
+    public function setMurmurUserInfo($murmurUserID = NULL) {
+        if (isset($murmurUserID)) {
+            $userInfo = $this->server->getRegistration($murmurUserID);
+            $this->username = $userInfo[0];
+            if (isset($userInfo[1]))
+                $this->userEmail = $userInfo[1];
+            if (isset($userInfo[2]))
+                $this->userComment = $userInfo[2];
+            if (isset($userInfo[3]))
+                $this->userHash = $userInfo[3];
+            if (isset($userInfo[4]))
+                $this->userPassword = $userInfo[4];
+            if (isset($userInfo[5]))
+                $this->userLastActive = $userInfo[5];
+            $this->murmurUserID = $murmurUserID;
+        } else {
+            unset($this->username);
+            unset($this->userEmail);
+            unset($this->userComment);
+            unset($this->userHash);
+            unset($this->userPassword);
+            unset($this->userLastActive);
+            unset($this->murmurUserID);
+        }
+    }
+
+    public function applyChanges() {
+        $userInfo = array(
+            $this->username,
+            $this->userEmail,
+            $this->userComment,
+            $this->userHash
+        );
+        $this->server->updateRegistration($this->murmurUserID, $userInfo);
+    }
+
+    public function getMurmurUserIDs() {
+        $murmurUserIDs = array();
+        foreach ($this->murmurUsers as $id => $username) {
+            $murmurUserIDs[] = $id;
+        }
+        return $murmurUserIDs;
+    }
+
     public function getDbUsers() {
+        if (empty($this->dbUsers))
+            $this->setDbUsers();
         return $this->dbUsers;
+    }
+
+    public function getDbUser($murmurUserID) {
+        $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker, allianceID, accountCharacters.corporationID');
+        $this->db->from('utilMurmur');
+        $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID');
+        $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID');
+        $this->db->where('murmurUserID', $murmurUserID);
+        $query = $this->db->get();
+        $dbUser = $query->result_array();
+        if (empty ($dbUser))
+            return FALSE;
+        return $dbUser[0];
     }
 
     public function setMurmurUsers() {
@@ -67,12 +147,19 @@ class User extends Model {
     }
 
     public function setDbUsers() {
-        $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker');
+        $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker, allianceID, accountCharacters.corporationID');
         $this->db->from('utilMurmur');
         $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID');
         $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID');
         $query = $this->db->get();
         $this->dbUsers = $query->result_array();
+    }
+
+    public function removeFromDB($murmurUserID) {
+        $ret = $this->db->delete('utilMurmur', array('murmurUserID' => $murmurUserID));
+        if (!$ret)
+            return FALSE;
+        return $ret;
     }
 
     public function getUsername() {
@@ -321,19 +408,6 @@ class User extends Model {
 
     public function setIdleSecs($idleSecs) {
         $this->idleSecs = $idleSecs;
-    }
-
-    public function setBlues() {
-        $this->db->select('corpAllianceContactList.contactID');
-        $this->db->from('corpAllianceContactList');
-        $this->db->join('corpCorporationSheet', 'corpCorporationSheet.corporationID = corpAllianceContactList.ownerID');
-        $this->db->where('corpCorporationSheet.allianceID', $this->config->item('allianceID'));
-        $this->db->where('standing >', 0);
-        $query = $this->db->get();
-        $this->blues = array();
-        foreach ($query->result_array() as $row) {
-            $this->blues[] = $row['contactID'];
-        }
     }
 
 }
