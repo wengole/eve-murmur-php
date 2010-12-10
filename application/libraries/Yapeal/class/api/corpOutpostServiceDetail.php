@@ -74,19 +74,7 @@ class corpOutpostServiceDetail extends ACorp {
     if (FALSE === $outpostList) {
       return FALSE;
     };// if FALSE ...
-    $cuntil = '1970-01-01 00:00:01';
     $ret = TRUE;
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new
-      $sql = 'delete from `';
-      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     foreach ($outpostList as $this->outpostID) {
       try {
         // Need to add extra stuff to normal parameters to make walking work.
@@ -94,7 +82,7 @@ class corpOutpostServiceDetail extends ACorp {
         // This tells API server which outpost we want.
         $apiParams['itemID'] = (string)$this->outpostID['stationID'];
         // First get a new cache instance.
-        $cache = new YapealApiCache($this->api, $this->section, $apiParams);
+        $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $apiParams);
         // See if there is a valid cached copy of the API XML.
         $result = $cache->getCachedApi();
         // If it's not cached need to try to get it.
@@ -107,49 +95,29 @@ class corpOutpostServiceDetail extends ACorp {
           if (FALSE === $result) {
             return FALSE;
           };
-          // Check if XML is valid.
-          if (FALSE === $cache->validateXML($result)) {
-            // No use going any farther if the XML isn't valid.
-            $ret = FALSE;
-            break;
-          };
-          // Cache the recieved XML.
+          // Cache the received XML.
           $cache->cacheXml($result);
+          // Check if XML is valid.
+          if (FALSE === $cache->isValid()) {
+            // No use going any farther if the XML isn't valid.
+            return FALSE;
+          };
         };// if FALSE === $result ...
+        $this->prepareTables();
         // Create XMLReader.
         $this->xr = new XMLReader();
         // Pass XML to reader.
         $this->xr->XML($result);
         // Outer structure of XML is processed here.
         while ($this->xr->read()) {
-          switch ($this->xr->nodeType) {
-            case XMLReader::ELEMENT:
-              switch ($this->xr->localName) {
-                case 'result':
-                  // Call the per API parser.
-                  $result = $this->parserAPI();
-                  if ($result === FALSE) {
-                    $ret = FALSE;
-                  };// if $result ...
-                  break;
-                case 'cachedUntil':
-                  $this->xr->read();
-                  $cuntil = $this->xr->value;
-                  break;
-                default:// Nothing to do.
-              };// switch $this->xr->localName ...
-              break;
-            case XMLReader::END_ELEMENT:
-              break;
-            default:// Nothing to do.
-          };// switch $this->xr->nodeType
-        };// while $xr->read() ...
-        // Update CachedUntil time since we should have a new one.
-        $data = array( 'api' => $this->api, 'cachedUntil' => $cuntil,
-          'ownerID' => $this->ownerID, 'section' => $this->section
-        );
-        $cu = new CachedUntil($data);
-        $cu->store();
+          if ($this->xr->nodeType == XMLReader::ELEMENT &&
+            $this->xr->localName == 'result') {
+            $result = $this->parserAPI();
+              if ($result === FALSE) {
+                $ret = FALSE;
+              };// if $result ...
+          };// if $this->xr->nodeType ...
+        };// while $this->xr->read() ...
         $this->xr->close();
       }
       catch (YapealApiErrorException $e) {
@@ -167,71 +135,19 @@ class corpOutpostServiceDetail extends ACorp {
     return $ret;
   }// function apiStore
   /**
-   * Per API parser for XML.
-   *
-   * @return bool Returns TRUE if XML was parsered correctly, FALSE if not.
-   */
-  protected function parserAPI() {
-    $tableName = YAPEAL_TABLE_PREFIX . $this->section . $this->api;
-    $defaults = array('ownerID' => $this->ownerID);
-    // Get a new query instance.
-    $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
-    $qb->setDefaults($defaults);
-    try {
-      while ($this->xr->read()) {
-        switch ($this->xr->nodeType) {
-          case XMLReader::ELEMENT:
-            switch ($this->xr->localName) {
-              case 'row':
-                // Walk through attributes and add them to row.
-                while ($this->xr->moveToNextAttribute()) {
-                  $row[$this->xr->name] = $this->xr->value;
-                };// while $this->xr->moveToNextAttribute() ...
-                $qb->addRow($row);
-                // Upsert every YAPEAL_MAX_UPSERT rows to help keep memory
-                // use in check.
-                if (YAPEAL_MAX_UPSERT == count($qb)) {
-                  $qb->store();
-                };// if YAPEAL_MAX_UPSERT == count($qb) ...
-                break;
-            };// switch $this->xr->localName ...
-            break;
-          case XMLReader::END_ELEMENT:
-            if ($this->xr->localName == 'result') {
-              // Insert any leftovers.
-              if (count($qb) > 0) {
-                $qb->store();
-              };// if count $rows ...
-              $qb = NULL;
-              return TRUE;
-            };// if $this->xr->localName == 'row' ...
-            break;
-        };// switch $this->xr->nodeType
-      };// while $xr->read() ...
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
-    $mess = 'Function ' . __FUNCTION__ . ' did not exit correctly' . PHP_EOL;
-    trigger_error($mess, E_USER_WARNING);
-    return FALSE;
-  }// function parserAPI
-  /**
    * Get per corp list of outposts from corpOutpostList.
    *
    * @return mixed List of stationIDs for this corp's outposts or FALSE if error
    * or no outposts found for corporation.
    */
   protected function outpostList() {
-    $tableName = YAPEAL_TABLE_PREFIX . $this->section . 'OutpostList';
     $list = array();
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
       $sql = 'select `stationID`';
       $sql .= ' from ';
-      $sql .= '`' . $tableName . '`';
+      $sql .= '`' . YAPEAL_TABLE_PREFIX . $this->section . 'OutpostList' . '`';
       $sql .= ' where `ownerID`=' . $this->ownerID;
-      $sql .= ' order by rand()';
       $list = $con->GetAll($sql);
     }
     catch (ADODB_Exception $e) {
@@ -241,7 +157,34 @@ class corpOutpostServiceDetail extends ACorp {
     if (count($list) == 0) {
       return FALSE;
     };// if count($list) ...
+    // Randomize order so no one Outpost can starve the rest in case of
+    // errors, etc.
+    if (count($list) > 1) {
+      shuffle($list);
+    };
     return $list;
   }// function posList
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    try {
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      // Empty out old data then upsert (insert) new.
+      $sql = 'delete from `';
+      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
+      $sql .= ' where `ownerID`=' . $this->ownerID;
+      $con->Execute($sql);
+    }
+    catch (ADODB_Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }// function prepareTables
 }
 ?>

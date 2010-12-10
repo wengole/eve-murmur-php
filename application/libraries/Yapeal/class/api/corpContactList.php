@@ -115,16 +115,6 @@ class corpContactList  extends ACorp {
    */
   protected function rowset($table) {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst($table);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      // Clear out old info for this owner.
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('ownerID', $this->ownerID);
@@ -162,5 +152,30 @@ class corpContactList  extends ACorp {
     trigger_error($mess, E_USER_WARNING);
     return FALSE;
   }// function rowset
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    $tables = array('AllianceContactList', 'CorporateContactList');
+    foreach ($tables as $table) {
+      try {
+        $con = YapealDBConnection::connect(YAPEAL_DSN);
+        // Empty out old data then upsert (insert) new.
+        $sql = 'delete from `';
+        $sql .= YAPEAL_TABLE_PREFIX . $this->section . $table . '`';
+        $sql .= ' where `ownerID`=' . $this->ownerID;
+        $con->Execute($sql);
+      }
+      catch (ADODB_Exception $e) {
+        return FALSE;
+      }
+    };// foreach $tables ...
+    return TRUE;
+  }// function prepareTables
 }
 ?>

@@ -56,6 +56,10 @@ class YapealApiCache {
    */
   private $hash;
   /**
+   * @var string Holds the ownerID to be used when updating cachedUntil table.
+   */
+  protected $ownerID = 0;
+  /**
    * @var array The list of any required params used in getting API.
    */
   protected $postParams;
@@ -63,6 +67,10 @@ class YapealApiCache {
    * @var string The api section that $api belongs to.
    */
   protected $section;
+  /**
+   * @var object Holds the validator.
+   */
+  private $vd;
   /**
    * @var string Hold the XML.
    */
@@ -73,12 +81,12 @@ class YapealApiCache {
    * @param string $api Name of the Eve API being cached.
    * @param string $section The api section that $api belongs to. For Eve
    * APIs will be one of account, char, corp, eve, map, or server.
+   * @param string $owner Owner for current Eve API being cached. This maybe
+   * empty for some APIs i.e. eve, map, and server.
    * @param array $postParams The list of required params used in getting API.
    * This maybe empty for some APIs i.e. eve, map, and server.
-   *
-   * @return object Returns the instance of the class.
    */
-  public function __construct($api, $section, $postParams = array()) {
+  public function __construct($api, $section, $owner = 0, $postParams = array()) {
     $params = '';
     if (!empty($postParams)) {
       foreach ($postParams as $k => $v) {
@@ -87,43 +95,76 @@ class YapealApiCache {
     };
     $this->api = $api;
     $this->hash = hash('sha1', $section . $api . $params);
+    $this->ownerID = $owner;
     $this->section = $section;
     $this->postParams = $postParams;
+    $this->vd = new YapealValidateXml($api, $section);
   }// function __constructor
   /**
-   * Function used to save API XML to cache database table and/or file.
+   * Function used to save API XML to cache database table and/or file and
+   * update utilCachedUntil table.
    *
    * @param string $xml The Eve API XML to be cached.
    *
    * @return bool Returns TRUE if XML was cached, FALSE otherwise.
    */
   public function cacheXml($xml) {
-    if (TRUE == YAPEAL_CACHE_XML) {
-      if (FALSE === $this->validateXML($xml)) {
-        $mess = 'Caching invalid API XML for ' . $this->section . $this->api;
+    if (empty($xml)) {
+      $mess = 'XML was empty' . PHP_EOL;
+      trigger_error($mess, E_USER_WARNING);
+      return FALSE;
+    };// if empty($xml) ...
+    // Do a default setting for cacheUntil so Yapeal waits a bit before trying
+    // again if something goes wrong. If everything works correctly time will be
+    // set to new cachedUntil time decided by what API XML returns.
+    $data = array( 'api' => $this->api, 'ownerID' => $this->ownerID,
+      'section' => $this->section
+    );
+    $cu = new CachedUntil($data);
+    // Use now + interval for cachedUntil.
+    $cu->cachedUntil = gmdate('Y-m-d H:i:s', (time() + $this->getCachedInterval()));
+    // check if XML is valid.
+    $this->vd->xml = $xml;
+    $this->vd->validateXML();
+    // If cachedUntil that API supplied is longer use it.
+    if ($this->vd->getCachedUntil() > $cu->cachedUntil) {
+      // Set cachedUntil to whatever API returned.
+      $cu->cachedUntil = $this->vd->getCachedUntil();
+    };
+    $cu->store();
+    $cu = NULL;
+    // Throw exception for any API errors.
+    if (TRUE == $this->vd->isApiError()) {
+      // Throw exception
+      // Have to use API error code for special API error handling to work.
+      $error = $this->vd->getApiError();
+      throw new YapealApiErrorException($error['message'], $error['code']);
+    };// if $this->vd->isApiError() ...
+    switch (YAPEAL_CACHE_OUTPUT) {
+      case 'both':
+        $this->cacheXmlDatabase($xml);
+        $this->cacheXmlFile($xml);
+        break;
+      case 'database':
+        $this->cacheXmlDatabase($xml);
+        break;
+      case 'file':
+        $this->cacheXmlFile($xml);
+        break;
+      case 'none':
+        return FALSE;
+      default:
+        $mess = 'Invalid value of "' . YAPEAL_CACHE_OUTPUT;
+        $mess .= '" for YAPEAL_CACHE_OUTPUT.';
+        $mess .= ' Check that the setting in config/yapeal.ini is correct.';
         trigger_error($mess, E_USER_WARNING);
-      };
-      switch (YAPEAL_CACHE_OUTPUT) {
-        case 'both':
-          $this->cacheXmlDatabase($xml);
-          $this->cacheXmlFile($xml);
-          break;
-        case 'database':
-          $this->cacheXmlDatabase($xml);
-          break;
-        case 'file':
-          $this->cacheXmlFile($xml);
-          break;
-        default:
-          $mess = 'Invalid value of "' . YAPEAL_CACHE_OUTPUT;
-          $mess .= '" for YAPEAL_CACHE_OUTPUT.';
-          $mess .= ' Check that the setting in config/yapeal.ini is correct.';
-          trigger_error($mess, E_USER_WARNING);
-          return FALSE;
-      };// switch YAPEAL_CACHE_OUTPUT ...
-      return TRUE;
-    };// if TRUE == YAPEAL_CACHE_XML
-    return FALSE;
+        return FALSE;
+    };// switch YAPEAL_CACHE_OUTPUT ...
+    if (FALSE == $this->vd->isValid()) {
+      $mess = 'Caching invalid API XML for ' . $this->section . DS . $this->api;
+      trigger_error($mess, E_USER_WARNING);
+    };
+    return TRUE;
   }// function cacheXml
   /**
    * Function used to save API XML into database table.
@@ -133,11 +174,6 @@ class YapealApiCache {
    * @return bool Returns TRUE if XML was cached, FALSE otherwise.
    */
   private function cacheXmlDatabase($xml) {
-    if (empty($xml)) {
-      $mess = 'XML was empty' . PHP_EOL;
-      trigger_error($mess, E_USER_WARNING);
-      return FALSE;
-    };// if empty($xml) ...
     try {
       // Get a new query instance.
       $qb = new YapealQueryBuilder(YAPEAL_TABLE_PREFIX . 'utilXmlCache', YAPEAL_DSN);
@@ -152,18 +188,13 @@ class YapealApiCache {
     return TRUE;
   }// function cacheXmlDatabase
   /**
-   * Function used to save API XML into file.
+   * Used to save API XML into file.
    *
    * @param string $xml The Eve API XML to be cached.
    *
    * @return bool Returns TRUE if XML was cached, FALSE otherwise.
    */
   private function cacheXmlFile($xml) {
-    if (empty($xml)) {
-      $mess = 'XML was empty' . PHP_EOL;
-      trigger_error($mess, E_USER_WARNING);
-      return FALSE;
-    };// if empty($xml) ...
     // Build cache file path
     $cachePath = realpath(YAPEAL_CACHE . $this->section) . DS;
     if (!is_dir($cachePath)) {
@@ -186,41 +217,111 @@ class YapealApiCache {
     return TRUE;
   }// function cacheXmlFile
   /**
-   * Function used to fetch API XML from database table and/or file.
+   * Used to delete any cached XML.
+   */
+  public function delCachedApi() {
+    switch (YAPEAL_CACHE_OUTPUT) {
+      case 'both':
+        $this->delCachedDatabase($xml);
+        $this->delCachedFile($xml);
+        break;
+      case 'database':
+        $this->delCachedDatabase($xml);
+        break;
+      case 'file':
+        $this->delCachedFile($xml);
+        break;
+      default:
+        $mess = 'Invalid value of "' . YAPEAL_CACHE_OUTPUT;
+        $mess .= '" for YAPEAL_CACHE_OUTPUT.';
+        $mess .= ' Check that the setting in config/yapeal.ini is correct.';
+        trigger_error($mess, E_USER_WARNING);
+    };// switch YAPEAL_CACHE_OUTPUT ...
+  }// function delCachedApi
+  /**
+   * Used to delete any cached XML from database.
+   *
+   * @return bool Returns TRUE if the cached copy of XML was deleted else FALSE.
+   */
+  private function delCachedDatabase() {
+    try {
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      $sql = 'delete from `' . YAPEAL_TABLE_PREFIX . 'utilXmlCache`';
+      $sql .= ' where';
+      $sql .= ' `hash`=' . $con->qstr($this->hash);
+      $con->Execute($sql);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }// function delCachedDatabase
+  /**
+   * Used to delete any cached XML from file.
+   *
+   * @return bool Returns TRUE if the cached copy of XML was deleted else FALSE.
+   */
+  private function delCachedFile() {
+    // Build cache file path
+    $cachePath = realpath(YAPEAL_CACHE . $this->section) . DS;
+    if (!is_dir($cachePath)) {
+      $mess = 'XML cache ' . $cachePath . ' is not a directory or does not exist';
+      trigger_error($mess, E_USER_WARNING);
+      return FALSE;
+    };
+    if (!is_writable($cachePath)) {
+      $mess = 'XML cache directory ' . $cachePath . ' is not writable';
+      trigger_error($mess, E_USER_WARNING);
+      return FALSE;
+    };// if !is_writable $cachePath ...
+    $cacheFile = $cachePath . $this->api . $this->hash . '.xml';
+    if (!file_exists($cacheFile) || !is_file($cacheFile)) {
+      return FALSE;
+    }
+    return @unlink($cacheFile);
+  }// function getCachedFile
+  /**
+   * Used to fetch API XML from database table and/or file.
    *
    * @return mixed Returns XML if cached copy is available and not expired, else
    * returns FALSE.
    */
   public function getCachedApi() {
-    if (TRUE == YAPEAL_CACHE_XML) {
-      switch (YAPEAL_CACHE_OUTPUT) {
-        case 'both':
-          $xml = $this->getCachedDatabase();
-          // If not cached in DB try file.
-          if (FALSE === $xml) {
-            $xml = $this->getCachedFile();
-            // If was cached to file but not to database add it to database.
-            if (FALSE !== $xml) {
-              $this->cacheXmlDatabase($xml);
-            };// if FALSE != $xml ...
-          };// if FALSE === $xml ...
-          return $xml;
-        case 'database':
-          return $this->getCachedDatabase();
-        case 'file':
-          return $this->getCachedFile();
-        default:
-          $mess = 'Invalid value of "' . YAPEAL_CACHE_OUTPUT;
-          $mess .= '" for YAPEAL_CACHE_OUTPUT.';
-          $mess .= ' Check that the setting in config/yapeal.ini is correct.';
-          trigger_error($mess, E_USER_WARNING);
-          return FALSE;
-      };// switch YAPEAL_CACHE_OUTPUT ...
-    };// if TRUE == YAPEAL_CACHE_XML
-    return FALSE;
+    switch (YAPEAL_CACHE_OUTPUT) {
+      case 'both':
+        $xml = $this->getCachedDatabase();
+        // If not cached in DB try file.
+        if (FALSE === $xml) {
+          $xml = $this->getCachedFile();
+          // If XML was cached to file but not to database add it to database.
+          if ($xml !== FALSE) {
+            $this->cacheXmlDatabase($xml);
+          };// if $xml !== FALSE ...
+        };// if FALSE === $xml ...
+        break;
+      case 'database':
+        $xml = $this->getCachedDatabase();
+        break;
+      case 'file':
+        $xml = $this->getCachedFile();
+        break;
+      case 'none':
+        return FALSE;
+      default:
+        $mess = 'Invalid value of "' . YAPEAL_CACHE_OUTPUT;
+        $mess .= '" for YAPEAL_CACHE_OUTPUT.';
+        $mess .= ' Check that the setting in config/yapeal.ini is correct.';
+        trigger_error($mess, E_USER_WARNING);
+        return FALSE;
+    };// switch YAPEAL_CACHE_OUTPUT ...
+    // If already past cachedUntil need to get XML again.
+    if (gmdate('Y-m-d H:i:s') > $this->vd->getCachedUntil()) {
+      return FALSE;
+    }
+    return $xml;
   }// function getCachedApi
   /**
-   * Function used to fetch API XML from database table.
+   * Used to fetch API XML from database table.
    *
    * @return mixed Returns XML if record is available and not expired, else
    * returns FALSE.
@@ -228,31 +329,29 @@ class YapealApiCache {
   private function getCachedDatabase() {
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'select `xml`';
+      $sql = 'select sql_no_cache `xml`';
       $sql .= ' from `' . YAPEAL_TABLE_PREFIX . 'utilXmlCache`';
-      $sql .= ' where `section`=' . $con->qstr($this->section);
-      $sql .= ' and `api`=' . $con->qstr($this->api);
-      $sql .= ' and `hash`=' . $con->qstr($this->hash);
+      $sql .= ' where';
+      $sql .= ' `hash`=' . $con->qstr($this->hash);
       $result = $con->GetOne($sql);
-      if (!empty($result)) {
-        // Check if XML is valid.
-        if (FALSE === $this->validateXML($result)) {
-          // If cached XML isn't valid anymore should delete it.
-          $sql = 'delete from `' . YAPEAL_TABLE_PREFIX . 'utilXmlCache`';
-          $sql .= ' where `section`=' . $con->qstr($this->section);
-          $sql .= ' and `api`=' . $con->qstr($this->api);
-          $sql .= ' and `hash`=' . $con->qstr($this->hash);
-          $con->Execute($sql);
-          return FALSE;
-        };
-        //$this->xml = $result;
-        return $result;
-      };// if ! empty $result ...
-      return FALSE;
+      if (empty($result)) {
+        return FALSE;
+      };
+      // Validate the XML.
+      $this->vd->xml = (string)$result;
+      // Check if XML is valid.
+      $this->vd->validateXML();
+      // If already past cachedUntil need to get XML again.
+      if (gmdate('Y-m-d H:i:s') > $this->vd->getCachedUntil()) {
+        // Delete cached XML from database.
+        $this->delCachedDatabase();
+        return FALSE;
+      };
     }
     catch (Exception $e) {
       return FALSE;
     }
+    return $result;
   }// function getCachedDatabase
   /**
    * Function used to fetch API XML from file.
@@ -270,165 +369,43 @@ class YapealApiCache {
     };
     $cacheFile = $cachePath . $this->api . $this->hash . '.xml';
     $result = @file_get_contents($cacheFile);
-    if (FALSE === $result) {
-      $mess = 'Could not read cached XML file';
-      trigger_error($mess, E_USER_NOTICE);
+    if (FALSE === $result || empty($result)) {
       return FALSE;
     };// if FALSE === $result ...
-    if (!empty($result)) {
-      // Check if XML is valid.
-      if (FALSE === $this->validateXML($result)) {
-        // If cached XML isn't valid anymore should delete it.
-        @unlink($cacheFile);
-        return FALSE;
-      };
-      //$this->xml = $result;
-      return $result;
-    };// if ! empty $result ...
-    return FALSE;
-  }// function getCachedFile
-  /**
-   * Used to validate basic structure of Eve API XML file.
-   *
-   * @param string $xml Contents either XML data to be checked or name of file
-   * to check.
-   *
-   * @return bool Return TRUE if The XML seems to have correct structure.
-   */
-  public function validateXML($xml) {
-    // Get a XMLReader instance.
-    $xr = new XMLReader();
-    // Assume it's a filename if there's no XML header.
-    if (FALSE === strpos($xml, "?xml version='1.0'")) {
-      if (FALSE !== strpos($xml, '<!DOCTYPE html')) {
-        $mess = 'API returned HTML error page.';
-        $mess .= ' Check to make sure API ';
-        $mess .= $this->section . '/' . $this->api;
-        $mess .= ' is valid for server.';
-        trigger_error($mess, E_USER_WARNING);
-        return FALSE;
-      };// if FALSE !== strpos <!DOCTYPE html ...
-      $fileName = realpath($xml);
-      if (FALSE === $fileName) {
-        $mess = 'Invalid file name or file path used: ' . $xml;
-        trigger_error($mess, E_USER_WARNING);
-        return FALSE;
-      };
-      // Check if file exist and can access it.
-      if (!is_file($fileName)) {
-        $mess = 'Unable to get ' . $fileName;
-        if (is_dir($fileName)) {
-          $mess .= PHP_EOL . $fileName . ' is a directory and not a file.';
-        } elseif (is_link($fileName)) {
-          $mess .= PHP_EOL . $fileName . ' is a link and not a file.';
-        } elseif (!is_readable($fileName)) {
-          $mess .= PHP_EOL . $fileName . ' is not readable.';
-        } else {
-          $mess .= ' File does not exist.';
-        };
-        trigger_error($mess, E_USER_WARNING);
-        return FALSE;
-      };// if !is_file $fileName ...
-      // Make sure actually got file opened.
-      if (FALSE === $xr->open($fileName)) {
-        $mess = $fileName . ' could not be opened by XMLReader to validate.';
-        trigger_error($mess, E_USER_WARNING);
-        return FALSE;
-      };// if FALSE == $reader->open $fileName ...
-    } else {
-      // Pass XML data to XMLReader so it can be checked.
-      $xr->XML($xml);
-    };// else strpos $xml...
-    $canValidate = FALSE;
-    // Build cache file path
-    $cachePath = realpath(YAPEAL_CACHE . $this->section) . DS;
-    if (is_dir($cachePath)) {
-      // Build W3C Schema file name
-      $cacheFile = $cachePath . $this->api . '.xsd';
-      // if schema exist have XMLReader try to use it
-      if (is_file($cacheFile)) {
-        // if schema is ok API can be validated as well.
-        if ($xr->setSchema($cacheFile)) {
-          $canValidate = TRUE;
-        } else {
-          $mess = 'Could not load schema to validate XML for ';
-          $mess .= $this->section . '/' . $this->api;
-          trigger_error($mess, E_USER_NOTICE);
-        };
-      } else {
-        $mess = 'Missing schema for ' . $this->section . '/' . $this->api;
-        $mess .= PHP_EOL . $cacheFile;
-        trigger_error($mess, E_USER_NOTICE);
-      };// else is_file ...
-    };// if is_dir ...
-    // XML is now available to start going through it.
-    $valid = '';
-    $vcount = 0;
-    while ($xr->read()) {
-      // Check elements.
-      if (XMLReader::ELEMENT == $xr->nodeType) {
-        // Elements currentTime, result, cachedUntil must exist and be in that
-        // order to be valid.
-        switch ($xr->localName) {
-          case 'currentTime':
-            // currentTime must be first.
-            if (!empty($valid) || $vcount != 0) {
-              return FALSE;
-            };
-            $valid = 'currentTime';
-            ++$vcount;
-            break;
-          case 'result':
-            // result must be in the middle and there must only be one.
-            if ($valid != 'currentTime' || $vcount != 1) {
-              return FALSE;
-            };
-            $valid = 'result';
-            ++$vcount;
-            break;
-          case 'cachedUntil':
-            // cachedUntil must come third.
-            if ($valid != 'result' || $vcount != 2) {
-              return FALSE;
-            };
-            $xr->read();
-            // Check if expired.
-            $cuntil = strtotime((string)$xr->value . ' +0000');
-            if (time() > $cuntil) {
-              return FALSE;
-            };// if time() ...
-            break;
-          case 'error':
-            // API error returned.
-            if (FALSE === $xr->moveToAttribute('code')) {
-              $mess = 'API error code not available';
-              trigger_error($mess, E_USER_WARNING);
-              return FALSE;
-            };// if FALSE === $xr->moveToAttribute('code') ...
-            $code = (string)$xr->value;
-            if (FALSE === $xr->moveToElement()) {
-              $mess = 'Could not move back to error element';
-              trigger_error($mess, E_USER_WARNING);
-              return FALSE;
-            };// if FALSE === $xr->moveToElement() ...
-            $xr->read();
-            $mess = (string)$xr->value;
-            // Throw exception
-            // Have to use API error code for special API error handling to work.
-            throw new YapealApiErrorException($mess, $code);
-        };// switch $xr->localName ...
-      };// if XMLReader::ELEMENT == $xr->nodeType ...
-    };// while $xr ...
-    // Check if XML was well formed after reading everything.
-    if (TRUE === $canValidate && FALSE === $xr->isValid()) {
-      $mess = 'Invalid XML for ';
-      $mess .= $this->section . '/' . $this->api . $this->hash;
-      trigger_error($mess, E_USER_WARNING);
+    // Validate the XML.
+    $this->vd->xml = $result;
+    $this->vd->validateXML();
+    // If already past cachedUntil need to get XML again.
+    if (gmdate('Y-m-d H:i:s') > $this->vd->getCachedUntil()) {
+      // Delete cached XML from filesystem.
+      $this->delCachedFile();
       return FALSE;
     };
-    // XML passed tests.
-    $xr->close();
-    return TRUE;
-  }// function validateXML
+    return $result;
+  }// function getCachedFile
+  private function getCachedInterval() {
+    $con = YapealDBConnection::connect(YAPEAL_DSN);
+    $sql = 'select `interval`';
+    $sql .= ' from ';
+    $sql .= '`' . YAPEAL_TABLE_PREFIX . 'utilCachedInterval`';
+    $sql .= ' where';
+    try {
+      $sql .= ' `section`=' . $con->qstr($this->section);
+      $sql .= ' and `api`=' . $con->qstr($this->api);
+      $result = (int)$con->getOne($sql);
+    }
+    catch (ADODB_Exception $e) {
+      return 3600;// Use an hour as default.
+    }
+    return $result;
+  }// function getCachedInterval
+  /**
+   * Returns if current cached XML is valid.
+   *
+   * @return bool Return TRUE if current XML was Validated and valid.
+   */
+  public function isValid() {
+    return $this->vd->isValid();
+  }// function isValid
 }
 ?>

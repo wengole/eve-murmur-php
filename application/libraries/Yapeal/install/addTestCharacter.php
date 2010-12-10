@@ -82,10 +82,9 @@ try {
       $char->activeAPI = (string)$section->activeAPI;
       $char->corporationID = (string)$row['corporationID'];
       $char->corporationName = (string)$row['corporationName'];
-      $postData = array('s' => 64, 'c' => $characterID);
-      $http = array('timeout' => YAPEAL_CURL_TIMEOUT, 'method' => 'POST',
-        'url' => 'http://img.eve.is/serv.asp');
-      $http['content'] = http_build_query($postData, NULL, '&');
+      $url = 'http://image.eveonline.com/Character/' . $characterID . '_64.jpg';
+      $http = array('timeout' => YAPEAL_CURL_TIMEOUT, 'method' => 'GET',
+        'url' => $url);
       $curl = new CurlRequest($http);
       $result = $curl->exec();
       // Now check for errors.

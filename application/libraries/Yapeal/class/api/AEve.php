@@ -141,10 +141,6 @@ abstract class AEve extends AApiRequest {
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new
-      $sql = 'truncate table `' . $tableName . '`';
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
@@ -183,5 +179,26 @@ abstract class AEve extends AApiRequest {
     trigger_error($mess, E_USER_WARNING);
     return FALSE;
   }// function parserAPI
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    try {
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      // Empty out old data then upsert (insert) new
+      $sql = 'truncate table `';
+      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
+      $con->Execute($sql);
+    }
+    catch (ADODB_Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }// function prepareTables
 }
 ?>

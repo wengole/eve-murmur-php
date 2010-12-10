@@ -71,11 +71,6 @@ class charCharacterSheet  extends AChar {
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('allianceName', '');
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `characterID`=' . $this->params['characterID'];
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
@@ -90,6 +85,7 @@ class charCharacterSheet  extends AChar {
               case 'cloneSkillPoints':
               case 'corporationID':
               case 'corporationName':
+              case 'DoB':
               case 'gender':
               case 'name':
               case 'race':
@@ -107,7 +103,7 @@ class charCharacterSheet  extends AChar {
               case 'attributes':
               case 'attributeEnhancers':
                 // Check if empty.
-                if ($this->xr->isEmptyElement == 1) {
+                if ($this->xr->isEmptyElement == TRUE) {
                   break;
                 };// if $this->xr->isEmptyElement ...
                 // Grab node name.
@@ -123,7 +119,7 @@ class charCharacterSheet  extends AChar {
                 break;
               case 'rowset':
                 // Check if empty.
-                if ($this->xr->isEmptyElement == 1) {
+                if ($this->xr->isEmptyElement == TRUE) {
                   break;
                 };// if $this->xr->isEmptyElement ...
                 // Grab rowset name.
@@ -170,15 +166,6 @@ class charCharacterSheet  extends AChar {
    */
   protected function attributes() {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst(__FUNCTION__);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $row = array('ownerID' => $this->ownerID);
@@ -217,15 +204,6 @@ class charCharacterSheet  extends AChar {
    */
   protected function attributeEnhancers() {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst(__FUNCTION__);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     while ($this->xr->read()) {
@@ -279,16 +257,6 @@ class charCharacterSheet  extends AChar {
    */
   protected function rowset($table) {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst($table);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      // Clear out old info for this owner.
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('ownerID', $this->ownerID);
@@ -333,16 +301,6 @@ class charCharacterSheet  extends AChar {
    */
   protected function skills() {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst(__FUNCTION__);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      // Clear out old info for this owner.
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $defaults = array('level' => 0, 'ownerID' => $this->ownerID,
@@ -383,5 +341,33 @@ class charCharacterSheet  extends AChar {
     trigger_error($mess, E_USER_WARNING);
     return FALSE;
   }// function skills
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    $tables = array('AttributeEnhancers', 'Certificates', 'CorporationRoles',
+      'CorporationRolesAtBase', 'CorporationRolesAtHQ',
+      'CorporationRolesAtOther', 'CorporationTitles', 'Skills'
+    );
+    foreach ($tables as $table) {
+      try {
+        $con = YapealDBConnection::connect(YAPEAL_DSN);
+        // Empty out old data then upsert (insert) new.
+        $sql = 'delete from `';
+        $sql .= YAPEAL_TABLE_PREFIX . $this->section . $table . '`';
+        $sql .= ' where `ownerID`=' . $this->ownerID;
+        $con->Execute($sql);
+      }
+      catch (ADODB_Exception $e) {
+        return FALSE;
+      }
+    };// foreach $tables ...
+    return TRUE;
+  }// function prepareTables
 }
 ?>

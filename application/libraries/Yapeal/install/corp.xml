@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<schema version="0.3" xmlns="http://yapeal.googlecode.com/files/xmlschema03">
+<schema version="0.3">
 <!--
 /**
  * XML from Yapeal.
@@ -26,7 +26,7 @@
  * @copyright  Copyright (c) 2008-2010, Michael Cummings
  * @license    http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @package    Yapeal
- * @subpackage Setup
+ * @subpackage Install
  * @link       http://code.google.com/p/yapeal/
  * @link       http://www.eve-online.com/
  */
@@ -110,6 +110,12 @@
       <NOTNULL/>
       <UNSIGNED/>
     </field>
+    <index name="`corpAssetList1`">
+      <col>`lft`</col>
+    </index>
+    <index name="`corpAssetList2`">
+      <col>`locationID`</col>
+    </index>
     <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="corpAttackers">
@@ -318,8 +324,8 @@
       <UNSIGNED/>
     </field>
     <field name="`memberLimit`" type="I2" size="5">
-      <DEFAULT value="0"/>
       <NOTNULL/>
+      <DEFAULT value="0"/>
       <UNSIGNED/>
     </field>
     <field name="`shares`" type="I8" size="20">
@@ -498,7 +504,7 @@
       <UNSIGNED/>
     </field>
     <field name="`installTime`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`jobID`" type="I8" size="20">
       <KEY/>
@@ -675,11 +681,9 @@
       <NOTNULL/>
     </field>
     <field name="`stationID`" type="I8" size="20">
-      <KEY/>
       <UNSIGNED/>
     </field>
     <field name="`typeID`" type="I8" size="20">
-      <KEY/>
       <UNSIGNED/>
     </field>
     <field name="`volEntered`" type="I8" size="20">
@@ -800,10 +804,6 @@
       <KEY/>
       <UNSIGNED/>
     </field>
-    <field name="`stationID`" type="I8" size="20">
-      <KEY/>
-      <UNSIGNED/>
-    </field>
     <field name="`dockingCostPerShipVolume`" type="N" size="17.2">
       <NOTNULL/>
     </field>
@@ -816,9 +816,6 @@
     <field name="`reprocessingStationTake`" type="N" size="5.4">
       <NOTNULL/>
     </field>
-    <field name="`stationName`" type="C" size="255">
-      <NOTNULL/>
-    </field>
     <field name="`solarSystemID`" type="I8" size="20">
       <NOTNULL/>
       <UNSIGNED/>
@@ -826,6 +823,13 @@
     <field name="`standingOwnerID`" type="I8" size="20">
       <NOTNULL/>
       <UNSIGNED/>
+    </field>
+    <field name="`stationID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`stationName`" type="C" size="255">
+      <NOTNULL/>
     </field>
     <field name="`stationTypeID`" type="I8" size="20">
       <NOTNULL/>
@@ -1067,7 +1071,7 @@
       <NOTNULL/>
     </field>
     <field name="`date`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`ownerID1`" type="I8" size="20">
       <UNSIGNED/>
@@ -1118,7 +1122,7 @@
     </field>
     <field name="`stationName`" type="C" size="255"/>
     <field name="`transactionDateTime`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`transactionFor`" type="C" size="255">
       <NOTNULL/>

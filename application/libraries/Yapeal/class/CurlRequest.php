@@ -103,11 +103,7 @@ class CurlRequest {
     if (isset($params['user_agent']) && $params['user_agent']) {
       $options[CURLOPT_USERAGENT] = $params['user_agent'];
     } else {
-      $user_agent = YAPEAL_APPLICATION_AGENT;
-      $user_agent .= ' Yapeal/'. YAPEAL_VERSION . YAPEAL_STABILITY;
-      $user_agent .= ' (' . PHP_OS . ' ' . php_uname('m') . ')';
-      $user_agent .= ' libcurl/' . $curl['version'];
-      $options[CURLOPT_USERAGENT] = trim($user_agent);
+      $options[CURLOPT_USERAGENT] = YAPEAL_APPLICATION_AGENT;
     };
     // Set cURL options as a block.
     curl_setopt_array($this->ch, $options);
@@ -150,7 +146,7 @@ class CurlRequest {
    *
    * This method returns a new cURL connection object for each server URL. Only
    * the scheme, host, port, user, pass of the URL are used, the fragment, path,
-   * and query are ignored. 
+   * and query are ignored.
    *
    * @param string $params A cURL compatible connection string.
    *

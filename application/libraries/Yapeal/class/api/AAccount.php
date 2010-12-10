@@ -218,13 +218,8 @@ abstract class AAccount extends AApiRequest {
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     // Set any column defaults needed.
-    $qb->setDefault('userID', $this->params['userID']);
+    $qb->setDefault('userID', $this->ownerID);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `userID`=' . $this->params['userID'];
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:

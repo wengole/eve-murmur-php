@@ -75,11 +75,6 @@ class charSkillInTraining  extends AChar {
       'trainingStartSP' => 0, 'trainingStartTime' => YAPEAL_START_TIME,
       'trainingToLevel' => 0, 'trainingTypeID' => 0);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->params['characterID'];
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:

@@ -123,56 +123,42 @@ class SectionChar {
           shuffle($apis);
         };
         foreach ($apis as $api) {
-          ++$apiCount;
-          $class = $this->section . $api;
-          $tableName = YAPEAL_TABLE_PREFIX . $class;
-          // These are passed on to the API class instance and used as part of
-          // hash for lock.
-          $params = array('apiKey' => $apiKey, 'characterID' => $charID,
-            'userID' => $userID);
-          $parameters = '';
-          foreach ($params as $k => $v) {
-            $parameters .= $k . '=' . $v;
-          };
-          $hash = hash('sha1', $class . $parameters);
-          // Use lock to keep from wasting time trying to do API that another
-          // Yapeal is already working on.
-          try {
-            $con = YapealDBConnection::connect(YAPEAL_DSN);
-            $sql = 'select get_lock(' . $con->qstr($hash) . ',5)';
-            if ($con->GetOne($sql) != 1) {
-              $mess = 'Failed to get lock for ' . $class . $hash;
-              trigger_error($mess, E_USER_NOTICE);
+          // If the cache for this API has expire try to get update.
+          if (CachedUntil::cacheExpired($api, $charID) === TRUE) {
+            ++$apiCount;
+            $class = $this->section . $api;
+            // These are passed on to the API class instance and used as part of
+            // hash for lock.
+            $params = array('apiKey' => $apiKey, 'characterID' => $charID,
+              'userID' => $userID);
+            $parameters = '';
+            foreach ($params as $k => $v) {
+              $parameters .= $k . '=' . $v;
+            };
+            $hash = hash('sha1', $class . $parameters);
+            // Use lock to keep from wasting time trying to do API that another
+            // Yapeal is already working on.
+            try {
+              $con = YapealDBConnection::connect(YAPEAL_DSN);
+              $sql = 'select get_lock(' . $con->qstr($hash) . ',5)';
+              if ($con->GetOne($sql) != 1) {
+                $mess = 'Failed to get lock for ' . $class . $hash;
+                trigger_error($mess, E_USER_NOTICE);
+                continue;
+              };// if $con->GetOne($sql) ...
+            }
+            catch(ADODB_Exception $e) {
               continue;
-            };// if $con->GetOne($sql) ...
-          }
-          catch(ADODB_Exception $e) {
-            continue;
-          }
-          $data = array('api' => $api, 'ownerID' => $charID,
-            'section' => $this->section
-          );
-          $cu = new CachedUntil($data);
-          // Should we wait to get API data
-          if ($cu->dontWait() === TRUE) {
-            // Set it so we wait a bit before trying again if something goes
-            // wrong. If everything works correctly time will be set to new
-            // cachedUntil time from API. Added some randomnizing so when there
-            // are major API bugs it does not cause huge spikes in API calls.
-            $time = YAPEAL_MAX_EXECUTE + mt_rand(0, 90);
-            $cu->cachedUntil = gmdate('Y-m-d H:i:s', $time);
-            $cu->store();
-          } else {
-            continue;
-          };// else $cu->dontWait ...
-          // Give each API 60 seconds to finish. This should never happen but is
-          // here to catch runaways.
-          set_time_limit(60);
-          $instance = new $class($params);
-          if ($instance->apiStore()) {
-            ++$apiSuccess;
-          };
-          $instance = null;
+            }
+            // Give each API 60 seconds to finish. This should never happen but is
+            // here to catch runaways.
+            set_time_limit(60);
+            $instance = new $class($params);
+            if ($instance->apiStore()) {
+              ++$apiSuccess;
+            };
+            $instance = null;
+          };// if CachedUntil::cacheExpired...
           // See if Yapeal has been running for longer than 'soft' limit.
           if (YAPEAL_MAX_EXECUTE < time()) {
             $mess = 'Yapeal has been working very hard and needs a break';

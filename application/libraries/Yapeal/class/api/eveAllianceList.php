@@ -70,7 +70,6 @@ class eveAllianceList extends AEve {
    * @return bool Returns TRUE if XML was parsered correctly, FALSE if not.
    */
   protected function parserAPI() {
-    $cuntil = '1970-01-01 00:00:01';
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . $this->api;
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
@@ -78,15 +77,6 @@ class eveAllianceList extends AEve {
     $this->corporations = new YapealQueryBuilder(
       YAPEAL_TABLE_PREFIX . $this->section . 'MemberCorporations', YAPEAL_DSN);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'truncate table `';
-      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
-      $con->Execute($sql);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'truncate table `';
-      $sql .= YAPEAL_TABLE_PREFIX . $this->section . 'MemberCorporations' . '`';
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
@@ -176,5 +166,30 @@ class eveAllianceList extends AEve {
     trigger_error($mess, E_USER_WARNING);
     return FALSE;
   }// function rowset
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    try {
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      // Empty out old data then upsert (insert) new.
+      $sql = 'truncate table `';
+      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
+      $con->Execute($sql);
+      // Empty out old data then upsert (insert) new.
+      $sql = 'truncate table `';
+      $sql .= YAPEAL_TABLE_PREFIX . $this->section . 'MemberCorporations' . '`';
+      $con->Execute($sql);
+    }
+    catch (ADODB_Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }// function prepareTables
 }
 ?>

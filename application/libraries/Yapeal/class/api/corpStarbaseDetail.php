@@ -117,7 +117,7 @@ class corpStarbaseDetail extends ACorp {
         // This tells API server which tower we want.
         $apiParams['itemID'] = (string)$this->posID['itemID'];
         // First get a new cache instance.
-        $cache = new YapealApiCache($this->api, $this->section, $apiParams);
+        $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $apiParams);
         // See if there is a valid cached copy of the API XML.
         $result = $cache->getCachedApi();
         // If it's not cached need to try to get it.
@@ -130,14 +130,14 @@ class corpStarbaseDetail extends ACorp {
           if (FALSE === $result) {
             return FALSE;
           };
+          // Cache the received XML.
+          $cache->cacheXml($result);
           // Check if XML is valid.
-          if (FALSE === $cache->validateXML($result)) {
+          if (FALSE === $cache->isValid()) {
             // No use going any farther if the XML isn't valid.
             $ret = FALSE;
             break;
           };
-          // Cache the recieved XML.
-          $cache->cacheXml($result);
         };// if FALSE === $result ...
         // Create XMLReader.
         $this->xr = new XMLReader();
@@ -145,35 +145,14 @@ class corpStarbaseDetail extends ACorp {
         $this->xr->XML($result);
         // Outer structure of XML is processed here.
         while ($this->xr->read()) {
-          switch ($this->xr->nodeType) {
-            case XMLReader::ELEMENT:
-              switch ($this->xr->localName) {
-                case 'result':
-                  // Call the per API parser.
-                  $result = $this->parserAPI();
-                  if ($result === FALSE) {
-                    $ret = FALSE;
-                    continue 2;
-                  };// if $result ...
-                  break;
-                case 'cachedUntil':
-                  $this->xr->read();
-                  $cuntil = $this->xr->value;
-                  break;
-                default:// Nothing to do.
-              };// switch $this->xr->localName ...
-              break;
-            case XMLReader::END_ELEMENT:
-              break;
-            default:// Nothing to do.
-          };// switch $this->xr->nodeType
-        };// while $xr->read() ...
-        // Update CachedUntil time since we should have a new one.
-        $data = array( 'api' => $this->api, 'cachedUntil' => $cuntil,
-          'ownerID' => $this->ownerID, 'section' => $this->section
-        );
-        $cu = new CachedUntil($data);
-        $cu->store();
+          if ($this->xr->nodeType == XMLReader::ELEMENT &&
+            $this->xr->localName == 'result') {
+            $result = $this->parserAPI();
+            if ($result === FALSE) {
+              $ret = FALSE;
+            };// if $result ...
+          };// if $this->xr->nodeType ...
+        };// while $this->xr->read() ...
         $this->xr->close();
       }
       catch (YapealApiErrorException $e) {
@@ -445,15 +424,13 @@ class corpStarbaseDetail extends ACorp {
    * no POSes found for corporation.
    */
   protected function posList() {
-    $tableName = YAPEAL_TABLE_PREFIX . $this->section . 'StarbaseList';
     $list = array();
     try {
       $con = YapealDBConnection::connect(YAPEAL_DSN);
       $sql = 'select `itemID`';
       $sql .= ' from ';
-      $sql .= '`' . $tableName . '`';
+      $sql .= '`' . YAPEAL_TABLE_PREFIX . $this->section . 'StarbaseList' . '`';
       $sql .= ' where `ownerID`=' . $this->ownerID;
-      $sql .= ' order by rand()';
       $list = $con->GetAll($sql);
     }
     catch (ADODB_Exception $e) {
@@ -463,7 +440,38 @@ class corpStarbaseDetail extends ACorp {
     if (count($list) == 0) {
       return FALSE;
     };// if count($list) ...
+    // Randomize order so no one POS can starve the rest in case of
+    // errors, etc.
+    if (count($list) > 1) {
+      shuffle($list);
+    };
     return $list;
   }// function posList
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    $tables = array('CombatSettings', 'Fuel', 'GeneralSettings',
+      'StarbaseDetail');
+    foreach ($tables as $table) {
+      try {
+        $con = YapealDBConnection::connect(YAPEAL_DSN);
+        // Empty out old data then upsert (insert) new.
+        $sql = 'delete from `';
+        $sql .= YAPEAL_TABLE_PREFIX . $this->section . $table . '`';
+        $sql .= ' where `ownerID`=' . $this->ownerID;
+        $con->Execute($sql);
+      }
+      catch (ADODB_Exception $e) {
+        return FALSE;
+      }
+    };// foreach $tables ...
+    return TRUE;
+  }// function prepareTables
 }
 ?>
