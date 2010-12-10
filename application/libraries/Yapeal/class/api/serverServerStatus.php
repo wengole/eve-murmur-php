@@ -74,11 +74,6 @@ class serverServerStatus extends AServer {
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `serverName`=' . $con->qstr('Tranquility');
-      $con->Execute($sql);
       // Add any extra (default) columns needed.
       $row = array('serverName' => 'Tranquility');
       while ($this->xr->read()) {

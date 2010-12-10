@@ -40,27 +40,22 @@ if (isset($_REQUEST['viewSource'])) {
   exit();
 };
 // Used to over come path issues caused by how script is ran on server.
-$dir = realpath(dirname(__FILE__));
+$dir = str_replace('\\', '/', realpath(dirname(__FILE__)));
 chdir($dir);
-// Define shortened name for DIRECTORY_SEPARATOR
-define('DS', DIRECTORY_SEPARATOR);
+// Define short name for directory separator which always uses unix '/'.
+if (!defined('DS')) {
+  define('DS', '/');
+};
 // Pull in Yapeal revision constants.
-$path = $dir . DS . 'revision.php';
-require_once realpath($path);
-// If being run from command-line look for options there if function available.
+require_once $dir . DS . 'revision.php';
+// If function getopts available get any command line parameters.
 if (function_exists('getopt')) {
-  $options = getopt('hVc:d:');
+  $options = getopt('hVc:');
   if (!empty($options)) {
     foreach ($options as $opt => $value) {
       switch ($opt) {
         case 'c':
-          $iniFile = realpath($value);
-          break;
-        case 'd':
-          /**
-           * Used to turn on special debug logging.
-           */
-          define('YAPEAL_DEBUG', $value);
+          $iniFile = str_replace('\\', '/', realpath($value));
           break;
         case 'h':
           usage();
@@ -83,8 +78,8 @@ if (function_exists('getopt')) {
   };// if !empty $options ...
 };// if function_exists getopt ...
 // Move down to 'inc' directory to read common_backend.php
-$path = $dir . DS . 'inc' . DS . 'common_backend.php';
-require_once realpath($path);
+$path = str_replace('\\', '/', realpath($dir . DS . 'inc' . DS . 'common_backend.php'));
+require_once $path;
 try {
   /**
    * Give ourself a 'soft' limit of 10 minutes to finish.
@@ -110,7 +105,9 @@ try {
   // Now take the list of sections and call each in turn.
   foreach ($sectionList as $sec) {
     try {
-      $section = new Sections(lcfirst($sec), FALSE);
+      // Have to use the following to work around lcfirst() being PHP 5.3 or
+      // above only.
+      $section = new Sections(strtolower(substr($sec, 0, 1)) . substr($sec, 1), FALSE);
     }
     catch (Exception $e) {
       // Section does not exist in utilSections or other error occurred.
@@ -123,8 +120,6 @@ try {
     $apis = explode(' ', $section->activeAPI);
     // Skip if there's no active APIs for this section.
     if (count($apis) == 0) {
-      $mess = 'No active APIs listed for section ' . $sec;
-      trigger_error($mess, E_USER_NOTICE);
       continue;
     };
     $class = 'Section' . ucfirst($sec);
@@ -148,19 +143,16 @@ catch (Exception $e) {
   require_once YAPEAL_CLASS . 'YapealErrorHandler.php';
   $mess = 'Uncaught exception in ' . basename(__FILE__);
   YapealErrorHandler::elog($mess, YAPEAL_ERROR_LOG);
-  $message = <<<MESS
-EXCEPTION:
-     Code: {$e->getCode() }
-  Message: {$e->getMessage() }
-     File: {$e->getFile() }
-     Line: {$e->getLine() }
-Backtrace:
-{$e->getTraceAsString() }
-\t--- END TRACE ---
-MESS;
+  $message = 'EXCEPTION:' . PHP_EOL;
+  $message .= '     Code: ' . $e->getCode() . PHP_EOL;
+  $message .= '  Message: ' . $e->getMessage() . PHP_EOL;
+  $message .= '     File: ' . $e->getFile() . PHP_EOL;
+  $message .= '     Line: ' . $e->getLine() . PHP_EOL;
+  $message .= 'Backtrace:' . PHP_EOL . $e->getTraceAsString() . PHP_EOL;
+  $message .= '        --- END TRACE ---' . PHP_EOL;
   YapealErrorHandler::elog($message, YAPEAL_ERROR_LOG);
 }
-trigger_error('Peak memory used:' . memory_get_peak_usage(TRUE), E_USER_NOTICE);
+//trigger_error('Peak memory used:' . memory_get_peak_usage(TRUE), E_USER_NOTICE);
 exit;
 /**
  * Function use to show the usage message on command line.

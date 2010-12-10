@@ -26,7 +26,7 @@
  * @copyright  Copyright (c) 2008-2010, Michael Cummings
  * @license    http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @package    Yapeal
- * @subpackage Setup
+ * @subpackage Install
  * @link       http://code.google.com/p/yapeal/
  * @link       http://www.eve-online.com/
  */
@@ -92,6 +92,12 @@
       <NOTNULL/>
       <UNSIGNED/>
     </field>
+    <index name="`charAssetList1`">
+      <col>`lft`</col>
+    </index>
+    <index name="`charAssetList2`">
+      <col>`locationID`</col>
+    </index>
     <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
   <table name="charAttackers">
@@ -252,6 +258,9 @@
       <UNSIGNED/>
     </field>
     <field name="`corporationName`" type="C" size="255">
+      <NOTNULL/>
+    </field>
+    <field name="`DoB`" type="T">
       <NOTNULL/>
     </field>
     <field name="`gender`" type="C" size="255">
@@ -477,7 +486,7 @@
       <UNSIGNED/>
     </field>
     <field name="`installTime`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`jobID`" type="I8" size="20">
       <KEY/>
@@ -593,10 +602,6 @@
       <KEY/>
       <UNSIGNED/>
     </field>
-    <field name="`read`" type="I1" size="1">
-      <DEFAULT value="0"/>
-      <UNSIGNED/>
-    </field>
     <field name="`senderID`" type="I8" size="20">
       <NOTNULL/>
       <UNSIGNED/>
@@ -663,11 +668,9 @@
       <NOTNULL/>
     </field>
     <field name="`stationID`" type="I8" size="20">
-      <KEY/>
       <UNSIGNED/>
     </field>
     <field name="`typeID`" type="I8" size="20">
-      <KEY/>
       <UNSIGNED/>
     </field>
     <field name="`volEntered`" type="I8" size="20">
@@ -680,6 +683,29 @@
     </field>
     <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
   </table>
+  <!--<table name="charMedals">
+    <descr>Table for /char/Medals.xml.aspx</descr>
+    <field name="`ownerID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`issued`" type="T">
+      <NOTNULL/>
+    </field>
+    <field name="`issuerID`" type="I8" size="20">
+      <NOTNULL/>
+      <UNSIGNED/>
+    </field>
+    <field name="`medalID`" type="I8" size="20">
+      <KEY/>
+      <UNSIGNED/>
+    </field>
+    <field name="`reason`" type="X"/>
+    <field name="`status`" type="C" size="32">
+      <NOTNULL/>
+    </field>
+    <opt platform="mysql"> ENGINE = INNODB COLLATE = utf8_unicode_ci</opt>
+  </table>-->
   <table name="charNotifications">
     <descr>Table for /char/Notifications.xml.aspx</descr>
     <field name="`ownerID`" type="I8" size="20">
@@ -942,7 +968,7 @@
       <NOTNULL/>
     </field>
     <field name="`date`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`ownerID1`" type="I8" size="20">
       <UNSIGNED/>
@@ -996,7 +1022,7 @@
     </field>
     <field name="`stationName`" type="C" size="255"/>
     <field name="`transactionDateTime`" type="T">
-      <KEY/>
+      <NOTNULL/>
     </field>
     <field name="`transactionFor`" type="C" size="255">
       <NOTNULL/>
@@ -1030,9 +1056,6 @@
   </sql>
   <sql prefixmethod="MANUAL">
     <query platform="mysql">ALTER TABLE `%%PcharIndustryJobs` MODIFY `completed` BOOLEAN NOT NULL</query>
-  </sql>
-  <sql prefixmethod="MANUAL">
-    <query platform="mysql">ALTER TABLE `%%PcharMailMessages` MODIFY `read` BOOLEAN NOT NULL</query>
   </sql>
   <sql prefixmethod="MANUAL">
     <query platform="mysql">ALTER TABLE `%%PcharMarketOrders` MODIFY `changed` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP</query>

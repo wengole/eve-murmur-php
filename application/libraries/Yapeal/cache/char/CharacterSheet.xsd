@@ -32,13 +32,13 @@
         </xs:element>
         <xs:element name="attributes">
           <xs:complexType>
-            <xs:choice maxOccurs="5">
+            <xs:sequence>
               <xs:element name="intelligence" type="xs:unsignedByte"/>
               <xs:element name="memory" type="xs:unsignedByte"/>
               <xs:element name="charisma" type="xs:unsignedByte"/>
               <xs:element name="perception" type="xs:unsignedByte"/>
               <xs:element name="willpower" type="xs:unsignedByte"/>
-            </xs:choice>
+            </xs:sequence>
           </xs:complexType>
         </xs:element>
         <xs:element maxOccurs="unbounded" name="rowset" type="rowset"/>
@@ -51,22 +51,11 @@
       <xs:element name="augmentatorValue" type="xs:unsignedByte"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="attributes">
-    <xs:complexType>
-      <xs:choice maxOccurs="5">
-        <xs:element name="intelligence" type="xs:unsignedByte"/>
-        <xs:element name="memory" type="xs:unsignedByte"/>
-        <xs:element name="charisma" type="xs:unsignedByte"/>
-        <xs:element name="perception" type="xs:unsignedByte"/>
-        <xs:element name="willpower" type="xs:unsignedByte"/>
-      </xs:choice>
-    </xs:complexType>
-  </xs:element>
   <xs:complexType name="rowType">
     <xs:attribute name="certificateID" type="eveID"/>
     <xs:attribute name="level" type="xs:unsignedByte"/>
     <xs:attribute name="roleID" type="eveID"/>
-    <xs:attribute name="roleName" type="xs:NCName"/>
+    <xs:attribute name="roleName" type="xs:string"/>
     <xs:attribute name="skillpoints" type="xs:unsignedLong"/>
     <xs:attribute name="titleID" type="eveID"/>
     <xs:attribute name="titleName" type="xs:string"/>

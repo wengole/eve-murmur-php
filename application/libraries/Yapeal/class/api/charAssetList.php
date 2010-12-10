@@ -92,11 +92,6 @@ class charAssetList extends AChar {
     );
     $inherit = array('locationID' => '0', 'index' => 2, 'level' => 0);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      $con->Execute($sql);
       // Move through all the rows and add them to database.
       // The returned value is the updated 'rgt' value for the root node.
       $row['rgt'] = $this->nestedSet($inherit);
@@ -199,5 +194,27 @@ class charAssetList extends AChar {
     trigger_error($mess, E_USER_WARNING);
     return $inherit['index'];
   }// function nestedSet
+  /**
+   * Method used to prepare database table(s) before parsing API XML data.
+   *
+   * If there is any need to delete records or empty tables before parsing XML
+   * and adding the new data this method should be used to do so.
+   *
+   * @return bool Will return TRUE if table(s) were prepared correctly.
+   */
+  protected function prepareTables() {
+    try {
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      // Empty out old data then upsert (insert) new.
+      $sql = 'delete from `';
+      $sql .= YAPEAL_TABLE_PREFIX . $this->section . $this->api . '`';
+      $sql .= ' where `ownerID`=' . $this->ownerID;
+      $con->Execute($sql);
+    }
+    catch (ADODB_Exception $e) {
+      return FALSE;
+    }
+    return TRUE;
+  }// function prepareTables
 }
 ?>

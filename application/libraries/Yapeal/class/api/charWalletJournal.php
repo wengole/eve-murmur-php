@@ -50,11 +50,11 @@ class charWalletJournal extends AChar {
   /**
    * @var string Holds the refID from each row in turn to use when walking.
    */
-  private $beforeID;
+  protected $beforeID;
   /**
    * @var string Holds the date from each row in turn to use when walking.
    */
-  private $date;
+  protected $date;
   /**
    * @var integer Hold row count used in walking.
    */
@@ -80,7 +80,6 @@ class charWalletJournal extends AChar {
   public function apiStore() {
     // This counter is used to insure do ... while can't become infinite loop.
     $counter = 1000;
-    $cuntil = '1970-01-01 00:00:01';
     $this->date = '1970-01-01 00:00:01';
     $this->beforeID = 0;
     try {
@@ -101,7 +100,7 @@ class charWalletJournal extends AChar {
         // This tells API server where to start from when walking.
         $apiParams['beforeRefID'] = $this->beforeID;
         // First get a new cache instance.
-        $cache = new YapealApiCache($this->api, $this->section, $apiParams);
+        $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $apiParams);
         // See if there is a valid cached copy of the API XML.
         $result = $cache->getCachedApi();
         // If it's not cached need to try to get it.
@@ -117,7 +116,7 @@ class charWalletJournal extends AChar {
           // Cache the received XML.
           $cache->cacheXml($result);
           // Check if XML is valid.
-          if (FALSE === $cache->validateXML($result)) {
+          if (FALSE === $cache->isValid()) {
             // No use going any farther if the XML isn't valid.
             return FALSE;
           };
@@ -128,38 +127,11 @@ class charWalletJournal extends AChar {
         $this->xr->XML($result);
         // Outer structure of XML is processed here.
         while ($this->xr->read()) {
-          switch ($this->xr->nodeType) {
-            case XMLReader::ELEMENT:
-              switch ($this->xr->localName) {
-                case 'currentTime':
-                  $this->xr->read();
-                  $cTime = strtotime($this->xr->value . ' +0000');
-                  break;
-                case 'result':
-                  // Call the per API parser.
-                  $result = $this->parserAPI();
-                  break;
-                case 'cachedUntil':
-                  $this->xr->read();
-                  $cuntil = $this->xr->value;
-                  // If API servers are still returning incorrect cachedUntil
-                  // time make correct one so we don't get lots of API errors.
-                  if ((strtotime($cuntil . ' +0000') - $cTime) < 1800) {
-                    $cuntil = gmdate('Y-m-d H:i:s', $cTime + 3600);
-                  };// if strtotime($cuntil . ' +0000') ...
-                  break;
-              };// switch $this->xr->localName ...
-              break;
-            case XMLReader::END_ELEMENT:
-              break;
-          };// switch $this->xr->nodeType
-        };// while $xr->read() ...
-        // Update CachedUntil time since we should have a new one.
-        $data = array( 'api' => $this->api, 'cachedUntil' => $cuntil,
-          'ownerID' => $this->ownerID, 'section' => $this->section
-        );
-        $cu = new CachedUntil($data);
-        $cu->store();
+          if ($this->xr->nodeType == XMLReader::ELEMENT &&
+            $this->xr->localName == 'result') {
+            $result = $this->parserAPI();
+          };// if $this->xr->nodeType ...
+        };// while $this->xr->read() ...
         $this->xr->close();
         // Leave loop if already got as many entries as API servers allow.
         if ($this->rowCount != 1000 || $this->date < $oldest) {
@@ -213,9 +185,10 @@ class charWalletJournal extends AChar {
                       $this->beforeID = $this->xr->value;
                       break;
                     case 'taxReceiverID':
+                    case 'taxAmount':
                       // Fix blank with zero for upsert.
                       if ($this->xr->value === '') {
-                        $row['taxReceiverID'] = 0;
+                        $row[$this->xr->name] = 0;
                       };// if $this->xr->value ...
                       break;
                     default:// Nothing to do here.

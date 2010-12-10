@@ -153,49 +153,58 @@ class CachedUntil extends ALimitedObject implements IGetBy {
     $this->con = NULL;
   }// function __destruct
   /**
-   * Used to decide if we want to wait or not getting EVE API data. Has
-   * randomizing wait option to help even out server and network loading.
+   * Used to tell if it is time to get the current API for the current owner by
+   * checking the datatime in utilCachedUntil table.
    *
-   * @param boolean $randomize When true (the default) can randomly decide
-   * to delay in getting API data.
+   * @param string $api Which API is data is needed for.
+   * @param string $owner Which owner the API data is needed for.
    *
-   * @return Boolean Returns TRUE when we need to get API data.
+   * @return bool Returns TRUE if it is time to get the API.
    */
-  public function dontWait($randomize = TRUE) {
-    $now = time() - 5;// 5 seconds for EVE API server time offset added :P
-    if ($this->recordExists === TRUE) {
-      $until = $this->cachedUntil;
-    } else {
+  public static function cacheExpired($api, $owner = 0) {
+    $sql = 'select `cachedUntil`';
+    $sql .= ' from `' . YAPEAL_TABLE_PREFIX . 'utilCachedUntil`';
+    $sql .= ' where';
+    $sql .= ' `ownerID`=' . $owner;
+    try {
+      // Get a database connection.
+      $con = YapealDBConnection::connect(YAPEAL_DSN);
+      $sql .= ' and `api`='. $con->qstr($api);
+      $result = (string)$con->GetOne($sql);
+    }
+    catch (ADODB_Exception $e) {
       return TRUE;
-    };// else $this->recordExists ...
-    $ctime = strtotime($until . ' +0000');
-    // Got to wait until API is ready.
-    if ($now < $ctime) {
-      return FALSE;
-    };// if $now ...
+    }
+    //var_dump($result);
+    if (empty($result)) {
+      return TRUE;
+    };
+    $now = time() - 5;// 5 seconds for EVE API server time offset added :P
+    $cuntil = strtotime($result . ' +0000');
     // Hard limited to maximum delay of 6 minutes for randomized pulls.
     // 5 minutes (300) plus a minute from being almost ready last time.
-    if (($now - $ctime) > 300) {
-      $mess = 'Overdue getting ' . $this->api . ' for ' . $this->ownerID;
+    if (($now - $cuntil) > 300) {
+      $mess = 'Overdue getting ' . $api . ' for ' . $owner;
       trigger_error($mess, E_USER_NOTICE);
       return TRUE;
     };// if $now ...
-    if ($randomize === TRUE) {
+    // Got to wait until API needs updating.
+    if ($now < $cuntil) {
+      return FALSE;
+    } else {
       // The later in the day and having already been delayed decreases chance
       // of being delayed again.
       // 1 in $mod chance each time with 1 in 2 up to 1 in 29 max
       // 1 + 0-23 (hours) + Time difference in minutes
-      $mod = 1 + gmdate('G') + floor(($now - $ctime) / 60);
+      $mod = 1 + gmdate('G') + floor(($now - $cuntil) / 60);
       $rand = mt_rand(0, $mod);
       // Get to wait a while longer.
       if ($rand == $mod) {
         return FALSE;
       };// if $rand==$mod ...
-    };// if $randomize ...
-    $mess = 'Time to get ' . $this->api . ' for ' . $this->ownerID;
-    trigger_error($mess, E_USER_NOTICE);
+    };// if $now ...
     return TRUE;
-  }// function dontWait
+  }//function cacheExpired
   /**
    * Used to get cachedUntil time from cachedUntil table by ID.
    *

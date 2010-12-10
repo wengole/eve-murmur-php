@@ -66,13 +66,12 @@ class corpCorporationSheet  extends ACorp {
    * @return Bool Return TRUE if store was successful.
    */
   public function apiStore() {
-    $cuntil = '1970-01-01 00:00:01';
     // Need to exclude some params when passing them to API server so it doesn't
     // get confused.
     $apiParams = $this->params;
     unset($apiParams['corporationID']);
     // First get a new cache instance.
-    $cache = new YapealApiCache($this->api, $this->section, $apiParams);
+    $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $apiParams);
     try {
       // See if there is a valid cached copy of the API XML.
       $result = $cache->getCachedApi();
@@ -86,13 +85,13 @@ class corpCorporationSheet  extends ACorp {
         if (FALSE === $result) {
           return FALSE;
         };
+        // Cache the received XML.
+        $cache->cacheXml($result);
         // Check if XML is valid.
-        if (FALSE === $cache->validateXML($result)) {
+        if (FALSE === $cache->isValid()) {
           // No use going any farther if the XML isn't valid.
           return FALSE;
         };
-        // Cache the recieved XML.
-        $cache->cacheXml($result);
       };// if FALSE === $result ...
       // Create XMLReader.
       $this->xr = new XMLReader();
@@ -152,11 +151,6 @@ class corpCorporationSheet  extends ACorp {
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('allianceName', '');
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `corporationID`=' . $this->params['corporationID'];
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
@@ -243,16 +237,6 @@ class corpCorporationSheet  extends ACorp {
    */
   protected function logo() {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . 'Logo';
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      // Clear out old info for this owner.
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('ownerID', $this->ownerID);
@@ -295,16 +279,6 @@ class corpCorporationSheet  extends ACorp {
    */
   protected function rowset($table) {
     $tableName = YAPEAL_TABLE_PREFIX . $this->section . ucfirst($table);
-    try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      // Clear out old info for this owner.
-      $con->Execute($sql);
-    }
-    catch (ADODB_Exception $e) {
-      return FALSE;
-    }
     // Get a new query instance.
     $qb = new YapealQueryBuilder($tableName, YAPEAL_DSN);
     $qb->setDefault('ownerID', $this->ownerID);

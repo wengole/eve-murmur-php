@@ -80,6 +80,8 @@ class YapealDBConnection {
     if (empty($dsn) || !is_string($dsn)) {
       throw new InvalidArgumentException('Bad value passed for $dsn');
     };
+    global $ADODB_COUNTRECS;
+    $ADODB_COUNTRECS = FALSE;
     if (empty(self::$connections)) {
       require_once YAPEAL_CLASS . 'ADODB_Exception.php';
       require_once YAPEAL_ADODB . 'adodb.inc.php';

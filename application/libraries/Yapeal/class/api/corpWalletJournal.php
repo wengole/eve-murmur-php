@@ -50,15 +50,15 @@ class corpWalletJournal extends ACorp {
   /**
    * @var integer Holds the current wallet account.
    */
-  private $account;
+  protected $account;
   /**
    * @var string Holds the refID from each row in turn to use when walking.
    */
-  private $beforeID;
+  protected $beforeID;
   /**
    * @var string Holds the date from each row in turn to use when walking.
    */
-  private $date;
+  protected $date;
   /**
    * @var integer Hold row count used in walking.
    */
@@ -92,7 +92,6 @@ class corpWalletJournal extends ACorp {
       $this->beforeID = 0;
       try {
         do {
-          $cuntil = '1970-01-01 00:00:01';
           // Give each wallet 60 seconds to finish. This should never happen but
           // is here to catch runaways.
           set_time_limit(60);
@@ -109,7 +108,7 @@ class corpWalletJournal extends ACorp {
           // This tells API server where to start from when walking.
           $apiParams['beforeRefID'] = $this->beforeID;
           // First get a new cache instance.
-          $cache = new YapealApiCache($this->api, $this->section, $apiParams);
+          $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $apiParams);
           // See if there is a valid cached copy of the API XML.
           $result = $cache->getCachedApi();
           // If it's not cached need to try to get it.
@@ -125,10 +124,11 @@ class corpWalletJournal extends ACorp {
             // Cache the received XML.
             $cache->cacheXml($result);
             // Check if XML is valid.
-            if (FALSE === $cache->validateXML($result)) {
-              // No use going any farther if the XML isn't valid.
+            if (FALSE === $cache->isValid()) {
               $ret = FALSE;
-              break;
+              // No use going any farther if the XML isn't valid.
+              // Have to continue with next account not just break while.
+              continue 2;
             };
           };// if FALSE === $result ...
           // Create XMLReader.
@@ -137,42 +137,16 @@ class corpWalletJournal extends ACorp {
           $this->xr->XML($result);
           // Outer structure of XML is processed here.
           while ($this->xr->read()) {
-            switch ($this->xr->nodeType) {
-              case XMLReader::ELEMENT:
-                switch ($this->xr->localName) {
-                  case 'currentTime':
-                    $this->xr->read();
-                    $cTime = strtotime($this->xr->value . ' +0000');
-                    break;
-                  case 'result':
-                    // Call the per API parser.
-                    $result = $this->parserAPI();
-                    if ($result === FALSE) {
-                      $ret = FALSE;
-                    };// if $result ...
-                    break;
-                  case 'cachedUntil':
-                    $this->xr->read();
-                    $cuntil = $this->xr->value;
-                    // If API servers are still returning incorrect cachedUntil
-                    // time make correct one so we don't get lots of API errors.
-                    if ((strtotime($cuntil . ' +0000') - $cTime) < 1800) {
-                      $cuntil = gmdate('Y-m-d H:i:s', $cTime + 3600);
-                    };// if strtotime($cuntil . ' +0000') ...
-                    break;
-                };// switch $this->xr->localName ...
-                break;
-              case XMLReader::END_ELEMENT:
-                break;
-              default:// Nothing to do.
-            };// switch $this->xr->nodeType
-          };// while $xr->read() ...
-          // Update CachedUntil time since we should have a new one.
-          $data = array( 'api' => $this->api, 'cachedUntil' => $cuntil,
-            'ownerID' => $this->ownerID, 'section' => $this->section
-          );
-          $cu = new CachedUntil($data);
-          $cu->store();
+            if ($this->xr->nodeType == XMLReader::ELEMENT &&
+              $this->xr->localName == 'result') {
+              $result = $this->parserAPI();
+              if ($result === FALSE) {
+                $ret = FALSE;
+                $this->xr->close();
+                continue 2;
+              };// if $result ...
+            };// if $this->xr->nodeType ...
+          };// while $this->xr->read() ...
           $this->xr->close();
           // Leave loop if already got as many entries as API servers allow.
           if ($this->rowCount != 1000 || $this->date < $oldest) {

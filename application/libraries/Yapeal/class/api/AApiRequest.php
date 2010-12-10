@@ -78,62 +78,43 @@ abstract class AApiRequest {
    * @return Bool Return TRUE if store was successful.
    */
   public function apiStore() {
-    $cuntil = '1970-01-01 00:00:01';
     // First get a new cache instance.
-    $cache = new YapealApiCache($this->api, $this->section, $this->params);
+    $cache = new YapealApiCache($this->api, $this->section, $this->ownerID, $this->params);
     try {
-      // See if there is a valid cached copy of the API XML.
+      // Get valid cached copy if there is one.
       $result = $cache->getCachedApi();
-      // If it's not cached need to try to get it.
+      // If XML is not cached need to try to get it from API server or proxy.
       if (FALSE === $result) {
         $proxy = $this->getProxy();
         $con = new YapealNetworkConnection();
         $result = $con->retrieveXml($proxy, $this->params);
-        // FALSE means there was an error and it has already been report so just
-        // return to caller.
+        // FALSE means there was an error and it has already been report just
+        // need to return to caller.
         if (FALSE === $result) {
           return FALSE;
         };
         // Cache the received result.
         $cache->cacheXml($result);
         // Check if XML is valid.
-        if (FALSE === $cache->validateXML($result)) {
+        if (FALSE === $cache->isValid()) {
           // No use going any farther if the XML isn't valid.
           return FALSE;
         };
       };// if FALSE === $result ...
+      if (in_array('prepareTables', get_class_methods($this->section . $this->api))) {
+        $this->prepareTables();
+      };
       // Create XMLReader.
       $this->xr = new XMLReader();
       // Pass XML to reader.
       $this->xr->XML($result);
       // Outer structure of XML is processed here.
       while ($this->xr->read()) {
-        switch ($this->xr->nodeType) {
-          case XMLReader::ELEMENT:
-            switch ($this->xr->localName) {
-              case 'currentTime':
-                break;
-              case 'result':
-                // Call the per API parser.
-                $result = $this->parserAPI();
-                break;
-              case 'cachedUntil':
-                $this->xr->read();
-                $cuntil = $this->xr->value;
-                break;
-            };// switch $this->xr->localName ...
-            break;
-          case XMLReader::END_ELEMENT:
-            break;
-        };// switch $this->xr->nodeType
-      };// while $xr->read() ...
-      // Update CachedUntil time since we should have a new one.
-      $data = array( 'api' => $this->api, 'cachedUntil' => $cuntil,
-        'ownerID' => $this->ownerID, 'section' => $this->section
-      );
-      $cu = new CachedUntil($data);
-      $cu->store();
-      $this->xr->close();
+        if ($this->xr->nodeType == XMLReader::ELEMENT &&
+          $this->xr->localName == 'result') {
+          $result = $this->parserAPI();
+        };// if $this->xr->nodeType ...
+      };// while $this->xr->read() ...
       return $result;
     }
     catch (YapealApiErrorException $e) {

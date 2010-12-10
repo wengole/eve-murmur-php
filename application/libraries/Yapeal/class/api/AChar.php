@@ -239,11 +239,6 @@ abstract class AChar extends AApiRequest {
     // Set any column defaults needed.
     $qb->setDefault('ownerID', $this->ownerID);
     try {
-      $con = YapealDBConnection::connect(YAPEAL_DSN);
-      // Empty out old data then upsert (insert) new.
-      $sql = 'delete from `' . $tableName . '`';
-      $sql .= ' where `ownerID`=' . $this->ownerID;
-      $con->Execute($sql);
       while ($this->xr->read()) {
         switch ($this->xr->nodeType) {
           case XMLReader::ELEMENT:
