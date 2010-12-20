@@ -130,15 +130,18 @@ class User extends Model {
     }
 
     public function getDbUser($murmurUserID) {
+        // TODO: Remove join and turn into several queries and set dbUser array elements manually from each query
+        // TODO: If fields are NULL then update murmur DB accordingly to ensure corpSheet etc. are actually being queried.
         $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker, allianceID, accountCharacters.corporationID');
         $this->db->from('utilMurmur');
-        $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID');
-        $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID');
+        $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID', 'left');
+        $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID', 'left');
         $this->db->where('murmurUserID', $murmurUserID);
         $query = $this->db->get();
         $dbUser = $query->result_array();
-        if (empty ($dbUser))
+        if (empty ($dbUser)) {
             return FALSE;
+        }
         return $dbUser[0];
     }
 
