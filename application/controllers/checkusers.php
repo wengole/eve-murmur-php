@@ -31,14 +31,13 @@ class CheckUsers extends Controller {
                 continue;
             $this->User->setMurmurUserInfo($murmurUserID);
             $murmurUserName = $this->User->getUsername();
-            if ($this->User->getUserHash() != "" && substr($murmurUserName, 0, 1) != '[') {
+            if ($this->User->getUserHash() != "") {
                 $this->renameUser($murmurUserID);
                 $this->User->applyChanges();
                 $this->User->setMurmurUserInfo();
             }
         }
         $this->benchmark->mark('code_end');
-        echo $this->benchmark->elapsed_time();
     }
 
     function _cleanUtilMurmur($dbUsers, $murmurIDs) {
@@ -60,7 +59,7 @@ class CheckUsers extends Controller {
         if (!isset($newUsername)) {
             if (!$dbUser = $this->User->getDbUser($murmurUserID)) {
                 echo "Failed to get dbUser for $murmurUserID\n<br />";
-                return false;
+                return FALSE;
             } else {
                 $username = $this->User->getUsername();
                 echo "$username";
