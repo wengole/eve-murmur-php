@@ -22,8 +22,8 @@ class Register extends Controller {
     }
 
     function add() {
-        $this->Registration->setUserID($this->input->post('userid'));
-        $this->Registration->setApikey($this->input->post('apikey'));
+        $this->Registration->setUserID(trim($this->input->post('userid')));
+        $this->Registration->setApikey(trim($this->input->post('apikey')));
         $this->Registration->setSelectedUser($this->input->post('username'));
         $userID = $this->Registration->getUserID();
         $apiKey = $this->Registration->getApiKey();
