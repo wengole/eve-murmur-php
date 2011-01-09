@@ -11,14 +11,20 @@ class Register extends Controller {
     function __construct() {
         parent::Controller();
         $this->load->helper(array('html', 'form'));
-        $this->load->model('Registration');
+        $this->load->model('registereduser');
+        $this->load->library('form_validation');
     }
 
     function index() {
-        $data['main_content'] = 'registerview';
         $data['title'] = 'Mumble Registration';
-        $data['data'] = $this->_getData();
-        $this->load->view('includes/template', $data);
+        $data['data'] = array();
+        if ($this->form_validation->run('register') == FALSE) {
+            $data['main_content'] = 'register_view';
+            $this->load->view('includes/template', $data);
+        } else {
+            $data['main_content'] = 'select_char_view';
+            $this->load->view('includes/template', $data);
+        }
     }
 
     function add() {

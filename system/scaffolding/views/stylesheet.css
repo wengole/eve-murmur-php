@@ -1,7 +1,7 @@
 body {
  margin: 0;
  padding: 0;
- font-family: Lucida Grande, Verdana, Geneva, Sans-serif;
+ font-family: 'Lucida Grande', Verdana, Geneva, Sans-serif;
  font-size: 11px;
  color: #4F5155;
  background: #fff url(<?php echo $image_url; ?>background.jpg) repeat-x left top;
@@ -97,7 +97,7 @@ form {
 }
 
 .input {
- font-family: Lucida Grande, Verdana, Geneva, Sans-serif;
+ font-family: 'Lucida Grande', Verdana, Geneva, Sans-serif;
  font-size: 11px;
  width: 600px;
  color: #333;
@@ -109,7 +109,7 @@ form {
 }
 
 .textarea {
- font-family: Lucida Grande, Verdana, Geneva, Sans-serif;
+ font-family: 'Lucida Grande', Verdana, Geneva, Sans-serif;
  font-size: 12px;
  width: 600px;
  color: #333;
