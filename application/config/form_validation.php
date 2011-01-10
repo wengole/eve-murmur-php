@@ -1,7 +1,7 @@
 <?php
 
 $config = array(
-    'register' => array(
+    'register1' => array(
         array(
             'field' => 'userid',
             'label' => 'User ID',
@@ -11,7 +11,9 @@ $config = array(
             'field' => 'apikey',
             'label' => 'API Key',
             'rules' => 'required|exact_length[64]|alpha_numeric|trim'
-        ),
+        )
+    ),
+    'register2' => array(
         array(
             'field' => 'password',
             'label' => 'Password',
