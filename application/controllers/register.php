@@ -16,14 +16,25 @@ class Register extends Controller {
     }
 
     function index() {
-        $data['title'] = 'Mumble Registration';
-        $data['data'] = array();
-        if ($this->form_validation->run('register') == FALSE) {
-            $data['main_content'] = 'register_view';
-            $this->load->view('includes/template', $data);
+        $title['title'] = 'Mumble Registration';
+        if ($this->form_validation->run('register1') == FALSE) {
+            $this->load->view('includes/html_head', $title);
+            $this->load->view('register/form_1');
+            $this->load->view('register/form_close');
+            $this->load->view('includes/html_foot');
+        } elseif($this->form_validation->run('register2') == FALSE) {
+            // TODO: Get username array
+            $this->load->view('includes/html_head', $title);
+            $this->load->view('register/form_1');
+            $this->load->view('register/form_2');
+            $this->load->view('register/form_close');
+            $this->load->view('includes/html_foot');
         } else {
-            $data['main_content'] = 'select_char_view';
-            $this->load->view('includes/template', $data);
+            // TODO: _getdata to populate registered view
+            // Do this in the if statement
+            $this->load->view('includes/html_head', $title);
+            $this->load->view('register/registered');
+            $this->load->view('includes/html_foot');
         }
     }
 
