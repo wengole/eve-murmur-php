@@ -31,6 +31,7 @@ class Register extends Controller {
             $this->load->view('includes/html_foot');
         } else {
             // TODO: _getdata to populate registered view
+            // Do this in the if statement
             $this->load->view('includes/html_head', $title);
             $this->load->view('register/registered');
             $this->load->view('includes/html_foot');
