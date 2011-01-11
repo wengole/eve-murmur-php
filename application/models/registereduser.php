@@ -39,8 +39,11 @@ class Registereduser extends Model {
         $ICE = Ice_initialize($initData);
         $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
         $this->server = $meta->getServer($this->config->item('vServerID'));
-        $params = array('userid' => '123456', 'key' => 'abc123');
+        $params = array('userid' => NULL, 'key' => NULL);
         $this->load->library('pheal/Pheal', $params);
+        spl_autoload_register('Pheal::classload');
+        PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
+        PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
     }
 
     private function retrieveRegistration($murmurUserID) {
@@ -78,9 +81,43 @@ class Registereduser extends Model {
                 $this->setApiLastCode($row['apiLastCode']);
                 $this->setApiLastMessage($row['apiLastMessage']);
             }
+        } elseif ($query->num_rows == 0 && isset($this->eveUserID) && isset($this->apiKey) && isset ($this->charID)) {
+            $this->retrieveCharacterInfo();
         } else {
             // TODO: Log error and possibly display message
+            // TODO: Clean up extraneous entries
         }
+    }
+
+    public function retrieveCharactersOnAccount() {
+        $characters = array();
+        $params = array('userid' => $this->getEveUserID(), 'key' => $this->getApiKey(), 'scope' => 'account');
+        $pheal = new Pheal($params);
+        $result = $pheal->Characters();
+        foreach ($result as $character) {
+            $characters[]['charid'] = $character->characterID;
+            $characters[]['name'] = $character->name;
+            $characters[]['corpid'] = $character->corporationID;
+            $characters[]['corpname'] = $character->corporationName;
+        }
+        return $characters;
+    }
+    
+    public function retrieveCharacterInfo() {
+        $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'eve');
+        $pheal = new Pheal($params);
+        $result = $pheal->CharacterInfo(array('characterID' => $this->charID));
+        $this->setCharName($result->characterName);
+        $this->setCorpID($result->corporationID);
+        $this->setCorpName($result->corporation);
+        $this->setAllyID($result->allianceID);
+        $this->setAllyName($result->alliance);
+    }
+    
+    public function retrieveCorporationSheet() {
+        $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'corp');
+        $pheal = new Pheal($params);
+        $result = $pheal->CorporationSheet(array('corporationID' => $this->corpID));
     }
 
     public function getUsername() {
@@ -258,7 +295,7 @@ class Registereduser extends Model {
     public function setAllyName($allyName) {
         $this->allyName = $allyName;
     }
-    
+
     public function getAllyTicker() {
         if (!isset($this->allyTicker)) {
             $this->retrieveUserFromDB($this->getMurmurUserID());
