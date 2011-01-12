@@ -11,7 +11,7 @@ class Register extends Controller {
     function __construct() {
         parent::Controller();
         $this->load->helper(array('html', 'form'));
-        $this->load->model('registereduser');
+        $this->load->model('Registereduser');
         $this->load->library('form_validation');
     }
 
@@ -22,13 +22,23 @@ class Register extends Controller {
             $this->load->view('register/form_1');
             $this->load->view('register/form_close');
             $this->load->view('includes/html_foot');
-        } elseif($this->form_validation->run('register2') == FALSE) {
-            // TODO: Get username array
-            $this->load->view('includes/html_head', $title);
-            $this->load->view('register/form_1');
-            $this->load->view('register/form_2');
-            $this->load->view('register/form_close');
-            $this->load->view('includes/html_foot');
+        } elseif ($this->form_validation->run('register2') == FALSE) {
+            $this->Registereduser->setEveUserID($this->input->post('userid'));
+            $this->Registereduser->setApiKey($this->input->post('apikey'));
+            $characters = $this->Registereduser->retieveCharactersOnAccount();
+            // If API is OK show the character selection, else show API request
+            if ($characters != FALSE) {
+                $this->load->view('includes/html_head', $title);
+                $this->load->view('register/form_1');
+                $this->load->view('register/form_2', $characters);
+                $this->load->view('register/form_close');
+                $this->load->view('includes/html_foot');
+            } else {
+                $this->load->view('includes/html_head', $title);
+                $this->load->view('register/form_1');
+                $this->load->view('register/form_close');
+                $this->load->view('includes/html_foot');
+            }
         } else {
             // TODO: _getdata to populate registered view
             // Do this in the if statement
