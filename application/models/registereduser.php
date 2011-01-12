@@ -2,7 +2,7 @@
 
 class Registereduser extends Model {
 
-    // Mumble registered user data
+// Mumble registered user data
     var $username;
     var $userEmail;
     var $userComment;
@@ -10,19 +10,28 @@ class Registereduser extends Model {
     var $userPassword;
     var $userLastActive;
     var $murmurUserID;
-    // Eve registered user data
+// Eve registered user data
     var $eveUserID;
     var $apiKey;
     var $charID;
+    var $charName;
     var $corpID;
+    var $corpName;
+    var $corpTicker;
     var $allyID;
-    // Others
+    var $allyName;
+    var $allyTicker;
+    var $apiIsActive;
+    var $apiLastChecked;
+    var $apiLastCode;
+    var $apiLastMessage;
+// Others
     var $server;
     var $blues;
     var $murmurUsers;
     var $dbUsers;
 
-    function User() {
+    function Registereduser() {
         parent::Model();
         $initData = new Ice_InitializationData;
         $initData->properties = Ice_createProperties();
@@ -30,122 +39,91 @@ class Registereduser extends Model {
         $ICE = Ice_initialize($initData);
         $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
         $this->server = $meta->getServer($this->config->item('vServerID'));
-        $params = array('userid' => '123456', 'key' => 'abc123');
+        $params = array('userid' => NULL, 'key' => NULL);
         $this->load->library('pheal/Pheal', $params);
+        spl_autoload_register('Pheal::classload');
+        PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
+        PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
     }
 
-    public function setBlues() {
-        $this->db->select('corpAllianceContactList.contactID');
-        $this->db->from('corpAllianceContactList');
-        $this->db->join('corpCorporationSheet', 'corpCorporationSheet.corporationID = corpAllianceContactList.ownerID');
-        $this->db->where('corpCorporationSheet.allianceID', $this->config->item('allianceID'));
-        $this->db->where('standing >', 0);
-        $query = $this->db->get();
-        $this->blues = array();
-        foreach ($query->result_array() as $row) {
-            $this->blues[] = $row['contactID'];
+    private function retrieveRegistration($murmurUserID) {
+        $reg = array();
+        array_pad($reg, 6, NULL);
+        try {
+            $reg = $this->server->retrieveRegistration($murmurUserID);
+        } catch (Murmur_InvalidUserException $exc) {
+            // TODO: Log exception with trace and possibly display message
         }
+        $this->setUsername($reg[0]);
+        $this->setUserEmail($reg[1]);
+        $this->setUserComment($reg[2]);
+        $this->setUserHash($reg[3]);
+        $this->setUserPassword($reg[4]);
+        $this->setUserLastActive($reg[5]);
     }
 
-    public function getBlues() {
-        if (empty($this->blues))
-            $this->setBlues();
-        return $this->blues;
-    }
-
-    public function getMurmurUsers() {
-        if (empty($this->murmurUsers))
-            $this->setMurmurUsers();
-        return $this->murmurUsers;
-    }
-
-    public function setMurmurUserInfo($murmurUserID = NULL) {
-        if (isset($murmurUserID)) {
-            $userInfo = $this->server->getRegistration($murmurUserID);
-            $this->username = $userInfo[0];
-            if (isset($userInfo[1]))
-                $this->userEmail = $userInfo[1];
-            if (isset($userInfo[2]))
-                $this->userComment = $userInfo[2];
-            if (isset($userInfo[3]))
-                $this->userHash = $userInfo[3];
-            if (isset($userInfo[4]))
-                $this->userPassword = $userInfo[4];
-            if (isset($userInfo[5]))
-                $this->userLastActive = $userInfo[5];
-            $this->murmurUserID = $murmurUserID;
+    private function retrieveUserFromDB($murmurUserID) {
+        $query = $this->db->get_where('eveUser', array('murmurUserID' => $murmurUserID));
+        if ($query->num_rows() == 1) {
+            foreach ($query->result_array() as $row) {
+                $this->setEveUserID($row['eveUserID']);
+                $this->setApiKey($row['eveApiKey']);
+                $this->setCharID($row['eveCharID']);
+                $this->setCharName($row['eveCharName']);
+                $this->setCorpID($row['eveCorpID']);
+                $this->setCorpName($row['eveCorpName']);
+                $this->setCorpTicker($row['eveCorpTicker']);
+                $this->setAllyID($row['eveAllyID']);
+                $this->setAllyName($row['eveAllyName']);
+                $this->setAllyTicker($row['eveAllyTicker']);
+                $this->setApiIsActive($row['apiIsActive']);
+                $this->setApiLastChecked($row['apiLastChecked']);
+                $this->setApiLastCode($row['apiLastCode']);
+                $this->setApiLastMessage($row['apiLastMessage']);
+            }
+        } elseif ($query->num_rows == 0 && isset($this->eveUserID) && isset($this->apiKey) && isset ($this->charID)) {
+            $this->retrieveCharacterInfo();
         } else {
-            unset($this->username);
-            unset($this->userEmail);
-            unset($this->userComment);
-            unset($this->userHash);
-            unset($this->userPassword);
-            unset($this->userLastActive);
-            unset($this->murmurUserID);
+            // TODO: Log error and possibly display message
+            // TODO: Clean up extraneous entries
         }
     }
 
-    public function applyChanges() {
-        $userInfo = array(
-            $this->username,
-            $this->userEmail,
-            $this->userComment,
-            $this->userHash
-        );
-        $this->server->updateRegistration($this->murmurUserID, $userInfo);
-    }
-
-    public function getMurmurUserIDs() {
-        $murmurUserIDs = array();
-        foreach ($this->murmurUsers as $id => $username) {
-            $murmurUserIDs[] = $id;
+    public function retrieveCharactersOnAccount() {
+        $characters = array();
+        $params = array('userid' => $this->getEveUserID(), 'key' => $this->getApiKey(), 'scope' => 'account');
+        $pheal = new Pheal($params);
+        $result = $pheal->Characters();
+        foreach ($result as $character) {
+            $characters[]['charid'] = $character->characterID;
+            $characters[]['name'] = $character->name;
+            $characters[]['corpid'] = $character->corporationID;
+            $characters[]['corpname'] = $character->corporationName;
         }
-        return $murmurUserIDs;
+        return $characters;
     }
-
-    public function getDbUsers() {
-        if (empty($this->dbUsers))
-            $this->setDbUsers();
-        return $this->dbUsers;
+    
+    public function retrieveCharacterInfo() {
+        $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'eve');
+        $pheal = new Pheal($params);
+        $result = $pheal->CharacterInfo(array('characterID' => $this->charID));
+        $this->setCharName($result->characterName);
+        $this->setCorpID($result->corporationID);
+        $this->setCorpName($result->corporation);
+        $this->setAllyID($result->allianceID);
+        $this->setAllyName($result->alliance);
     }
-
-    public function getDbUser($murmurUserID) {
-        // TODO: Remove join and turn into several queries and set dbUser array elements manually from each query
-        // TODO: If fields are NULL then update murmur DB accordingly to ensure corpSheet etc. are actually being queried.
-        $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker, allianceID, accountCharacters.corporationID');
-        $this->db->from('utilMurmur');
-        $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID', 'left');
-        $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID', 'left');
-        $this->db->where('murmurUserID', $murmurUserID);
-        $query = $this->db->get();
-        $dbUser = $query->result_array();
-        if (empty ($dbUser)) {
-            return FALSE;
-        }
-        return $dbUser[0];
-    }
-
-    public function setMurmurUsers() {
-        $this->murmurUsers = $this->server->getRegisteredUsers('');
-    }
-
-    public function setDbUsers() {
-        $this->db->select('murmurUserID, accountCharacters.characterID, name, ticker, allianceID, accountCharacters.corporationID');
-        $this->db->from('utilMurmur');
-        $this->db->join('accountCharacters', 'utilMurmur.characterID = accountCharacters.characterID');
-        $this->db->join('corpCorporationSheet', 'accountCharacters.corporationID = corpCorporationSheet.corporationID');
-        $query = $this->db->get();
-        $this->dbUsers = $query->result_array();
-    }
-
-    public function removeFromDB($murmurUserID) {
-        $ret = $this->db->delete('utilMurmur', array('murmurUserID' => $murmurUserID));
-        if (!$ret)
-            return FALSE;
-        return $ret;
+    
+    public function retrieveCorporationSheet() {
+        $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'corp');
+        $pheal = new Pheal($params);
+        $result = $pheal->CorporationSheet(array('corporationID' => $this->corpID));
     }
 
     public function getUsername() {
+        if (!isset($this->username)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->username;
     }
 
@@ -154,6 +132,9 @@ class Registereduser extends Model {
     }
 
     public function getUserEmail() {
+        if (!isset($this->userEmail)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->userEmail;
     }
 
@@ -162,6 +143,9 @@ class Registereduser extends Model {
     }
 
     public function getUserComment() {
+        if (!isset($this->userComment)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->userComment;
     }
 
@@ -170,6 +154,9 @@ class Registereduser extends Model {
     }
 
     public function getUserHash() {
+        if (!isset($this->userHash)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->userHash;
     }
 
@@ -178,6 +165,9 @@ class Registereduser extends Model {
     }
 
     public function getUserPassword() {
+        if (!isset($this->userPassword)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->userPassword;
     }
 
@@ -186,6 +176,9 @@ class Registereduser extends Model {
     }
 
     public function getUserLastActive() {
+        if (!isset($this->userLastActive)) {
+            $this->retrieveRegistration($this->getMurmurUserID());
+        }
         return $this->userLastActive;
     }
 
@@ -194,6 +187,9 @@ class Registereduser extends Model {
     }
 
     public function getMurmurUserID() {
+        if (!isset($this->murmurUserID)) {
+            return -1;
+        }
         return $this->murmurUserID;
     }
 
@@ -202,6 +198,9 @@ class Registereduser extends Model {
     }
 
     public function getEveUserID() {
+        if (!isset($this->eveUserID)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
         return $this->eveUserID;
     }
 
@@ -210,6 +209,9 @@ class Registereduser extends Model {
     }
 
     public function getApiKey() {
+        if (!isset($this->apiKey)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
         return $this->apiKey;
     }
 
@@ -218,6 +220,9 @@ class Registereduser extends Model {
     }
 
     public function getCharID() {
+        if (!isset($this->charID)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
         return $this->charID;
     }
 
@@ -225,7 +230,21 @@ class Registereduser extends Model {
         $this->charID = $charID;
     }
 
+    public function getCharName() {
+        if (!isset($this->charName)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->charName;
+    }
+
+    public function setCharName($charName) {
+        $this->charName = $charName;
+    }
+
     public function getCorpID() {
+        if (!isset($this->corpID)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
         return $this->corpID;
     }
 
@@ -233,7 +252,32 @@ class Registereduser extends Model {
         $this->corpID = $corpID;
     }
 
+    public function getCorpName() {
+        if (!isset($this->corpName)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->corpName;
+    }
+
+    public function setCorpName($corpName) {
+        $this->corpName = $corpName;
+    }
+
+    public function getCorpTicker() {
+        if (!isset($this->corpTicker)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->corpTicker;
+    }
+
+    public function setCorpTicker($corpTicker) {
+        $this->corpTicker = $corpTicker;
+    }
+
     public function getAllyID() {
+        if (!isset($this->allyID)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
         return $this->allyID;
     }
 
@@ -241,156 +285,102 @@ class Registereduser extends Model {
         $this->allyID = $allyID;
     }
 
-    public function getSession() {
-        return $this->session;
+    public function getAllyName() {
+        if (!isset($this->allyName)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->allyName;
     }
 
-    public function setSession($session) {
-        $this->session = $session;
+    public function setAllyName($allyName) {
+        $this->allyName = $allyName;
     }
 
-    public function getMute() {
-        return $this->mute;
+    public function getAllyTicker() {
+        if (!isset($this->allyTicker)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->allyTicker;
     }
 
-    public function setMute($mute) {
-        $this->mute = $mute;
+    public function setAllyTicker($allyTicker) {
+        $this->allyTicker = $allyTicker;
     }
 
-    public function getDeaf() {
-        return $this->deaf;
+    public function getApiIsActive() {
+        if (!isset($this->apiIsActive)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->apiIsActive;
     }
 
-    public function setDeaf($deaf) {
-        $this->deaf = $deaf;
+    public function setApiIsActive($apiIsActive) {
+        $this->apiIsActive = $apiIsActive;
     }
 
-    public function getSuppress() {
-        return $this->suppress;
+    public function getApiLastChecked() {
+        if (!isset($this->apiLastChecked)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->apiLastChecked;
     }
 
-    public function setSuppress($suppress) {
-        $this->suppress = $suppress;
+    public function setApiLastChecked($apiLastChecked) {
+        $this->apiLastChecked = $apiLastChecked;
     }
 
-    public function getPrioritySpeaker() {
-        return $this->prioritySpeaker;
+    public function getApiLastCode() {
+        if (!isset($this->apiLastCode)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->apiLastCode;
     }
 
-    public function setPrioritySpeaker($prioritySpeaker) {
-        $this->prioritySpeaker = $prioritySpeaker;
+    public function setApiLastCode($apiLastCode) {
+        $this->apiLastCode = $apiLastCode;
     }
 
-    public function getSelfMute() {
-        return $this->selfMute;
+    public function getApiLastMessage() {
+        if (!isset($this->apiLastMessage)) {
+            $this->retrieveUserFromDB($this->getMurmurUserID());
+        }
+        return $this->apiLastMessage;
     }
 
-    public function setSelfMute($selfMute) {
-        $this->selfMute = $selfMute;
+    public function setApiLastMessage($apiLastMessage) {
+        $this->apiLastMessage = $apiLastMessage;
     }
 
-    public function getSelfDeaf() {
-        return $this->selfDeaf;
+    public function getServer() {
+        return $this->server;
     }
 
-    public function setSelfDeaf($selfDeaf) {
-        $this->selfDeaf = $selfDeaf;
+    public function setServer($server) {
+        $this->server = $server;
     }
 
-    public function getChannel() {
-        return $this->channel;
+    public function getBlues() {
+        return $this->blues;
     }
 
-    public function setChannel($channel) {
-        $this->channel = $channel;
+    public function setBlues($blues) {
+        $this->blues = $blues;
     }
 
-    public function getOnlineSecs() {
-        return $this->onlineSecs;
+    public function getMurmurUsers() {
+        return $this->murmurUsers;
     }
 
-    public function setOnlineSecs($onlineSecs) {
-        $this->onlineSecs = $onlineSecs;
+    public function setMurmurUsers($murmurUsers) {
+        $this->murmurUsers = $murmurUsers;
     }
 
-    public function getBytesPerSec() {
-        return $this->bytesPerSec;
+    public function getDbUsers() {
+        return $this->dbUsers;
     }
 
-    public function setBytesPerSec($bytesPerSec) {
-        $this->bytesPerSec = $bytesPerSec;
-    }
-
-    public function getVersion() {
-        return $this->version;
-    }
-
-    public function setVersion($version) {
-        $this->version = $version;
-    }
-
-    public function getRelease() {
-        return $this->release;
-    }
-
-    public function setRelease($release) {
-        $this->release = $release;
-    }
-
-    public function getOs() {
-        return $this->os;
-    }
-
-    public function setOs($os) {
-        $this->os = $os;
-    }
-
-    public function getOsVersion() {
-        return $this->osVersion;
-    }
-
-    public function setOsVersion($osVersion) {
-        $this->osVersion = $osVersion;
-    }
-
-    public function getIdentity() {
-        return $this->identity;
-    }
-
-    public function setIdentity($identity) {
-        $this->identity = $identity;
-    }
-
-    public function getContext() {
-        return $this->context;
-    }
-
-    public function setContext($context) {
-        $this->context = $context;
-    }
-
-    public function getAddress() {
-        return $this->address;
-    }
-
-    public function setAddress($address) {
-        $this->address = $address;
-    }
-
-    public function getTcpOnly() {
-        return $this->tcpOnly;
-    }
-
-    public function setTcpOnly($tcpOnly) {
-        $this->tcpOnly = $tcpOnly;
-    }
-
-    public function getIdleSecs() {
-        return $this->idleSecs;
-    }
-
-    public function setIdleSecs($idleSecs) {
-        $this->idleSecs = $idleSecs;
+    public function setDbUsers($dbUsers) {
+        $this->dbUsers = $dbUsers;
     }
 
 }
