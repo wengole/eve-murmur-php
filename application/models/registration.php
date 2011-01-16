@@ -180,7 +180,7 @@ class Registration extends Model {
     }
 
     public function getSelectedUser() {
-        if (isset($this->selectedUser)) {
+        if (isset($this->selectedUser) && isset($this->unameArray)) {
             return $this->unameArray[$this->selectedUser];
         } else {
             return NULL;
