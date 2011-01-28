@@ -49,7 +49,7 @@ class PhealConfig
      * proxy you might want to modify this.
      * @var String
      */
-    public $api_base = "http://api.eve-online.com/";
+    public $api_base = "https://api.eve-online.com/";
 
     /**
      * associative array with additional parameters that should be passed
