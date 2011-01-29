@@ -23,9 +23,7 @@ class Register extends CI_Controller {
             $this->load->view('register/form_close');
             $this->load->view('includes/html_foot');
         } elseif ($this->form_validation->run('register2') == FALSE) {
-            $this->Registereduser->setEveUserID($this->input->post('userid'));
-            $this->Registereduser->setApiKey($this->input->post('apikey'));
-            $characters = $this->Registereduser->retieveCharactersOnAccount();
+            $this->Registereduser->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
             // If API is OK show the character selection, else show API request
             if ($characters != FALSE) {
                 $this->load->view('includes/html_head', $title);
@@ -68,7 +66,6 @@ class Register extends CI_Controller {
                 && $this->Registration->getPassword() == $this->Registration->getPassword2()) {
             $this->Registration->registerUser();
             $data['title'] = 'Mumble Registration';
-            $data['data'] = $this->_getData();
             if (!empty($data['data']['errorMessage'])) {
                 $data['main_content'] = 'registerview';
             } else {
@@ -78,26 +75,8 @@ class Register extends CI_Controller {
         } else {
             $data['main_content'] = 'registerview';
             $data['title'] = 'Mumble Registration';
-            $data['data'] = $this->_getData();
             $this->load->view('includes/template', $data);
         }
-    }
-
-    function _getData() {
-        $data = array(
-            'userID' => $this->Registration->getUserID(),
-            'apiKey' => $this->Registration->getApiKey(),
-            'unameArray' => $this->Registration->getUnameArray(),
-            'selectedUser' => $this->Registration->getSelectedUser(),
-            'username' => $this->Registration->getUsername(),
-            'password' => $this->Registration->getPassword(),
-            'password2' => $this->Registration->getPassword2(),
-            'errorMessage' => $this->Registration->getErrorMessage(),
-            'host' => $this->Registration->getHost(),
-            'port' => $this->Registration->getPort(),
-            'successMessage' => $this->Registration->getSuccessMessage()
-        );
-        return $data;
     }
 
 }
