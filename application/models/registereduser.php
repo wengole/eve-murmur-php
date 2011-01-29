@@ -1,6 +1,6 @@
 <?php
 
-class Registereduser extends Model {
+class Registereduser extends CI_Model {
 
     var $errorMessage;
 
@@ -20,6 +20,7 @@ class Registereduser extends Model {
     }
 
     function getCharacters($userID = NULL, $apiKey = NULL) {
+        $this->
         $this->errorMessage = "";
         $params = array('userid' => $userID, 'key' => $apiKey, 'scope' => 'account');
         $pheal = new Pheal($params);

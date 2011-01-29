@@ -6,7 +6,7 @@ if (!defined('BASEPATH'))
 require_once 'Ice.php';
 require_once APPPATH . 'libraries/Murmur_1.2.2.php';
 
-class Register extends Controller {
+class Register extends CI_Controller {
 
     function __construct() {
         parent::Controller();
