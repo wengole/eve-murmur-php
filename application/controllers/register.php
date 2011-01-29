@@ -9,7 +9,7 @@ require_once APPPATH . 'libraries/Murmur_1.2.2.php';
 class Register extends CI_Controller {
 
     function __construct() {
-        parent::Controller();
+        parent::__construct();
         $this->load->helper(array('html', 'form'));
         $this->load->model('Registereduser');
         $this->load->library('form_validation');

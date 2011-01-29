@@ -5,7 +5,7 @@ class Registereduser extends CI_Model {
     var $errorMessage;
 
     function Registereduser() {
-        parent::Model();
+        parent::__construct();
         $initData = new Ice_InitializationData;
         $initData->properties = Ice_createProperties();
         $initData->properties->setProperty('Ice.ImplicitContext', 'Shared');
