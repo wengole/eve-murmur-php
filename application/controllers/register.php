@@ -46,6 +46,21 @@ class Register extends CI_Controller {
         }
     }
 
+    function submit() {
+        $userID = $this->input->post('userid');
+        $apiKey = $this->input->post('apikey');
+        $charID = $this->input->post('username');
+        $password = $this->input->post('password');
+        if (!$charID && !$password) {
+            log_message('debug', 'Requesting characters for '.$userID);
+            $characters = $this->Registereduser->getCharacters($userID, $apiKey);
+            log_message('debug', 'Got characteres, returning JSON');
+            echo json_encode($characters);
+        } else {
+            echo "This will be the success message :P";
+        }
+    }
+
     function add() {
         $this->Registration->setUserID(trim($this->input->post('userid')));
         $this->Registration->setApikey(trim($this->input->post('apikey')));

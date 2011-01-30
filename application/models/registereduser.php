@@ -3,6 +3,7 @@
 class Registereduser extends CI_Model {
 
     var $errorMessage;
+    var $server;
 
     function Registereduser() {
         parent::__construct();
@@ -20,18 +21,25 @@ class Registereduser extends CI_Model {
     }
 
     function getCharacters($userID = NULL, $apiKey = NULL) {
-        $this->
         $this->errorMessage = "";
         $params = array('userid' => $userID, 'key' => $apiKey, 'scope' => 'account');
         $pheal = new Pheal($params);
         try {
+            log_message('debug','Pheal->Characters()');
             $result = $pheal->Characters();
         } catch (PhealAPIException $exc) {
             log_message('error', $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
             return FALSE;
         }
-        $this->updateBlues();
+        $characters = array();
+        foreach ($result->characters as $character) {
+            $characters[] = array('charid' => (string)$character->characterID, 'name' => (string)$character->name);
+            log_message('info',$character->characterID.' : '.$character->name);
+        }
+        log_message('debug','Returning characters');
+        return $characters;
+        //$this->updateBlues();
     }
 
     function updateBlues() {
