@@ -34,7 +34,7 @@ class Registereduser extends CI_Model {
         }
         $characters = array();
         foreach ($result->characters as $character) {
-            $characters[] = array('charid' => (string)$character->characterID, 'name' => (string)$character->name);
+            $characters[] = array('charid' => (int)$character->characterID, 'name' => (string)$character->name);
             log_message('info',$character->characterID.' : '.$character->name);
         }
         log_message('debug','Returning characters');
