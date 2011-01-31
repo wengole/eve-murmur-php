@@ -6,6 +6,10 @@ if (!defined('BASEPATH'))
 require_once 'Ice.php';
 require_once APPPATH . 'libraries/Murmur_1.2.2.php';
 
+/**
+ * @property Registereduser $Registereduser
+ */
+
 class Register extends CI_Controller {
 
     function __construct() {
@@ -54,8 +58,13 @@ class Register extends CI_Controller {
         if (!$charID && !$password) {
             log_message('debug', 'Requesting characters for '.$userID);
             $characters = $this->Registereduser->getCharacters($userID, $apiKey);
-            log_message('debug', 'Got characteres, returning JSON');
-            echo json_encode($characters);
+            if($characters) {
+                log_message('debug', 'Got characteres, returning JSON');
+                echo json_encode($characters);
+            } else {
+                log_message('error', 'Pheal: '.$this->Registereduser->errorMessage);
+                echo json_encode(array('message' => $this->Registereduser->errorMessage));
+            }
         } else {
             echo "This will be the success message :P";
         }
