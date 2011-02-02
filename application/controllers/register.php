@@ -7,15 +7,14 @@ require_once 'Ice.php';
 require_once APPPATH . 'libraries/Murmur_1.2.2.php';
 
 /**
- * @property Registereduser $Registereduser
+ * @property User $User
  */
-
 class Register extends CI_Controller {
 
     function __construct() {
         parent::__construct();
         $this->load->helper(array('html', 'form'));
-        $this->load->model('Registereduser');
+        $this->load->model('User');
         $this->load->library('form_validation');
     }
 
@@ -27,7 +26,7 @@ class Register extends CI_Controller {
             $this->load->view('register/form_close');
             $this->load->view('includes/html_foot');
         } elseif ($this->form_validation->run('register2') == FALSE) {
-            $this->Registereduser->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
+            $this->User->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
             // If API is OK show the character selection, else show API request
             if ($characters != FALSE) {
                 $this->load->view('includes/html_head', $title);
@@ -56,14 +55,14 @@ class Register extends CI_Controller {
         $charID = $this->input->post('username');
         $password = $this->input->post('password');
         if (!$charID && !$password) {
-            log_message('debug', 'Requesting characters for '.$userID);
-            $characters = $this->Registereduser->getCharacters($userID, $apiKey);
-            if($characters) {
+            log_message('debug', 'Requesting characters for ' . $userID);
+            $characters = $this->User->getCharacters($userID, $apiKey);
+            if ($characters) {
                 log_message('debug', 'Got characteres, returning JSON');
                 echo json_encode($characters);
             } else {
-                log_message('error', 'Pheal: '.$this->Registereduser->errorMessage);
-                echo json_encode(array('message' => $this->Registereduser->errorMessage));
+                log_message('error', 'Pheal: ' . $this->User->errorMessage);
+                echo json_encode(array('error' => $this->User->errorMessage));
             }
         } else {
             echo "This will be the success message :P";
