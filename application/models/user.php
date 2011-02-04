@@ -1,6 +1,6 @@
 <?php
 
-class Registereduser extends CI_Model {
+class User extends CI_Model {
 
     var $errorMessage;
     var $server;

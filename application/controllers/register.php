@@ -69,37 +69,4 @@ class Register extends CI_Controller {
         }
     }
 
-    function add() {
-        $this->Registration->setUserID(trim($this->input->post('userid')));
-        $this->Registration->setApikey(trim($this->input->post('apikey')));
-        $this->Registration->setSelectedUser($this->input->post('username'));
-        $userID = $this->Registration->getUserID();
-        $apiKey = $this->Registration->getApiKey();
-        if ($this->input->post('apikey') != $this->Registration->getApiKey() || $this->input->post('userid') != $this->Registration->getUserID()
-                || (empty($unameArray) && !empty($userID) && !empty($apiKey))) {
-            $this->Registration->populateCharacters();
-            $unameArray = $this->Registration->getUnameArray();
-        }
-        if (!empty($unameArray)) {
-            $this->Registration->setUsername($this->Registration->getSelectedUser());
-        }
-        $this->Registration->setPassword($this->input->post('password'));
-        $this->Registration->setPassword2($this->input->post('password2'));
-        if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->Registration->getPassword()) && $this->Registration->getPassword() != ""
-                && $this->Registration->getPassword() == $this->Registration->getPassword2()) {
-            $this->Registration->registerUser();
-            $data['title'] = 'Mumble Registration';
-            if (!empty($data['data']['errorMessage'])) {
-                $data['main_content'] = 'registerview';
-            } else {
-                $data['main_content'] = 'registeredview';
-            }
-            $this->load->view('includes/template', $data);
-        } else {
-            $data['main_content'] = 'registerview';
-            $data['title'] = 'Mumble Registration';
-            $this->load->view('includes/template', $data);
-        }
-    }
-
 }
