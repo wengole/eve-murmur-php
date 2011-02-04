@@ -33,20 +33,26 @@ class User extends CI_Model {
             return FALSE;
         }
         $characters = array();
-        foreach ($result->characters as $character) {
-            $characters[] = array('charid' => (int) $character->characterID, 'name' => (string) $character->name);
-            log_message('info', $character->characterID . ' : ' . $character->name);
-        }
-        log_message('debug','Updating blues to check characters');
+        $contacts = array();
+        log_message('debug', 'Updating blues to check characters');
         if ($this->updateBlues()) {
-            log_message('debug','Loading blues to array');
-            $this->db->get_where('contact',array('standing >' => 10));
+            log_message('debug', 'Loading blues to array');
+            $query = $this->db->select('contactID')->where('standing >', 10);
+            foreach ($query->result_array() as $contact) {
+                $contacts[] = $contact['contactID'];
+            }
+            foreach ($result->characters as $character) {
+                $pheal->eveScope->CharacterInfo(array('characterID' => $character->characterID));
+                //TODO: Finish this.
+                $characters[] = array('charid' => (int) $character->characterID, 'name' => (string) $character->name);
+                log_message('info', $character->characterID . ' : ' . $character->name);
+            }
         } else {
             
         }
+
         log_message('debug', 'Returning characters');
         return $characters;
-        
     }
 
     function updateBlues() {
