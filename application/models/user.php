@@ -20,8 +20,9 @@ class User extends CI_Model {
         PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
         PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
         log_message('debug', 'Updating blues to check characters');
-        //$this->updateBlues();
-        //$this->blues = $this->loadBlues();
+        // Don't do this every time
+        // $this->updateBlues();
+        $this->blues = $this->loadBlues();
     }
 
     function getCharacters($userID = NULL, $apiKey = NULL) {
@@ -40,7 +41,7 @@ class User extends CI_Model {
         foreach ($result->characters as $character) {
             log_message('info', $character->characterID . ' : ' . $character->name);
             if ($this->isBlue($character->characterID)) {
-                log_message('debug', '...is blue');
+                log_message('info', '...is blue');
                 $characters[] = array('charid' => (int) $character->characterID, 'name' => (string) $character->name);
             }
         }
@@ -54,10 +55,10 @@ class User extends CI_Model {
      */
     function updateBlues() {
         $this->errorMessage = "";
-        $params = array('userid' => $this->config->item('blueUserID'), 'key' => $this->config->item('blueApiKey'), 'scope' => 'corp');
+        $params = array('userid' => $this->config->item('blueUserID'), 'key' => $this->config->item('blueApiKey'));
         $pheal = new Pheal($params);
         try {
-            $result = $pheal->ContactList(array('characterID' => $this->config->item('blueCharID')));
+            $result = $pheal->corpScope->ContactList(array('characterID' => $this->config->item('blueCharID')));
         } catch (PhealAPIException $exc) {
             log_message('error', $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
@@ -70,14 +71,22 @@ class User extends CI_Model {
             }
             if (!empty($contacts)) {
                 $this->db->trans_start();
-                $this->db->delete('contacts');
+                $this->db->delete('contact', array('contactID >' => 0));
+                log_message('info', $this->db->last_query());
+                $mysqlError = mysql_error();
+                if ($mysqlError != "")
+                    log_message('error', $mysqlError);
                 foreach ($contacts as $contact) {
-                    $this->db->insert('contacts', $contact);
+                    $this->db->insert('contact', $contact);
+                    log_message('info', $this->db->last_query());
+                    $mysqlError = mysql_error();
+                    if ($mysqlError != "")
+                        log_message('error', $mysqlError);
                 }
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
                     $this->errorMessage = "Failed to update contacts";
-                    log_message('error', $this->errorMessage.': '.$this->db->show_error());
+                    log_message('error', $this->errorMessage . ': ' . $this->db->show_error());
                     return FALSE;
                 }
             }
@@ -87,14 +96,23 @@ class User extends CI_Model {
             }
             if (!empty($contacts)) {
                 $this->db->trans_start();
-                $this->db->delete('contacts');
+                $this->db->delete('contact', array('contactID >' => 0));
+                log_message('info', $this->db->last_query());
+                $mysqlError = mysql_error();
+                if ($mysqlError != "")
+                    log_message('error', $mysqlError);
                 foreach ($contacts as $contact) {
-                    $this->db->insert('contacts', $contact);
+                    $this->db->insert('contact', $contact);
+                    log_message('info', $this->db->last_query());
+                    $mysqlError = mysql_error();
+                    if ($mysqlError != "")
+                        log_message('error', $mysqlError);
                 }
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
                     $this->errorMessage = "Failed to update contacts";
-                    log_message('error', $this->errorMessage.': '.$this->db->show_error());
+                    $mysqlError = mysql_error();
+                    log_message('error', $this->errorMessage . ': ' . $mysqlError);
                     return FALSE;
                 }
             }
@@ -116,7 +134,13 @@ class User extends CI_Model {
             log_message('error', $exc->getMessage());
             return NULL;
         }
-        if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues) || in_array($charInfo->allianceID, $this->blues)) {
+        log_message('info','corpID: '.$charInfo->corporationID);
+        log_message('info','allyID: '.$charInfo->allianceID);
+        log_message('info', $this->config->item('corpID'));
+        log_message('info', $this->config->item('allianceID'));
+        if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues) 
+                || in_array($charInfo->allianceID, $this->blues) || $charInfo->corporationID == $this->config->item('corpID')
+                || $charInfo->allianceID == $this->config->item('allianceID')) {
             return true;
         } else {
             return false;
@@ -130,7 +154,9 @@ class User extends CI_Model {
     function loadBlues() {
         log_message('debug', 'Loading blues to array');
         $blues = array();
-        $query = $this->db->select('contactID')->where('standing >', 0);
+        $this->db->select('contactID')->where('standing >', 0);
+        $query = $this->db->get('contact');        
+        log_message('info', $this->db->last_query());
         foreach ($query->result_array() as $blue) {
             $blues[] = $blue['contactID'];
         }
