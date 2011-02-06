@@ -13,9 +13,8 @@ class Register extends CI_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->helper(array('html', 'form'));
+        $this->load->helper(array('html'));
         $this->load->model('User');
-        $this->load->library('form_validation');
     }
 
     function index() {
@@ -52,9 +51,9 @@ class Register extends CI_Controller {
     function submit() {
         $userID = $this->input->post('userid');
         $apiKey = $this->input->post('apikey');
-        $charID = $this->input->post('username');
+        $charID = $this->input->post('charid');
         $password = $this->input->post('password');
-        if (!$charID && !$password) {
+        if (!$charID && !$password && $password != "") {
             log_message('debug', 'Requesting characters for ' . $userID);
             $characters = $this->User->getCharacters($userID, $apiKey);
             if ($characters) {
@@ -65,7 +64,10 @@ class Register extends CI_Controller {
                 echo json_encode(array('error' => $this->User->errorMessage));
             }
         } else {
-            echo "This will be the success message :P";
+            log_message('debug', 'Registering user');
+            log_message('info', 'CharID: '.$charID);
+            log_message('info', 'Password: '.$password);
+            echo json_encode(array('success' => 'User registered'));
         }
     }
 

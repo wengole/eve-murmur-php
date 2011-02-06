@@ -25,6 +25,12 @@ class User extends CI_Model {
         $this->blues = $this->loadBlues();
     }
 
+    /**
+     *
+     * @param int $userID EVE User ID for API
+     * @param String $apiKey EVE API Key
+     * @return Array Array of characters that are allowed to register (blue)
+     */
     function getCharacters($userID = NULL, $apiKey = NULL) {
         $this->errorMessage = "";
         $params = array('userid' => $userID, 'key' => $apiKey, 'scope' => 'account');
@@ -43,10 +49,12 @@ class User extends CI_Model {
             if ($this->isBlue($character->characterID)) {
                 log_message('info', '...is blue');
                 $characters[] = array('charid' => (int) $character->characterID, 'name' => (string) $character->name);
+            } else {
+                log_message('info', '...is not blue');
             }
         }
         log_message('debug', 'Returning characters');
-        return $characters;
+        return array_unique($characters);
     }
 
     /**
@@ -134,11 +142,7 @@ class User extends CI_Model {
             log_message('error', $exc->getMessage());
             return NULL;
         }
-        log_message('info','corpID: '.$charInfo->corporationID);
-        log_message('info','allyID: '.$charInfo->allianceID);
-        log_message('info', $this->config->item('corpID'));
-        log_message('info', $this->config->item('allianceID'));
-        if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues) 
+        if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues)
                 || in_array($charInfo->allianceID, $this->blues) || $charInfo->corporationID == $this->config->item('corpID')
                 || $charInfo->allianceID == $this->config->item('allianceID')) {
             return true;
@@ -155,7 +159,7 @@ class User extends CI_Model {
         log_message('debug', 'Loading blues to array');
         $blues = array();
         $this->db->select('contactID')->where('standing >', 0);
-        $query = $this->db->get('contact');        
+        $query = $this->db->get('contact');
         log_message('info', $this->db->last_query());
         foreach ($query->result_array() as $blue) {
             $blues[] = $blue['contactID'];
