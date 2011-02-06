@@ -1,5 +1,6 @@
 $(document).ready(function() {
     $('#userIdInput').keyup(function(){
+        var validUserID=/\d{5,}/
         
     });
     $('#inputForm').submit(function(e) {

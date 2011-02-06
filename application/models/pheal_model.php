@@ -1,19 +1,15 @@
 <?php
-
-class User extends CI_Model {
+/**
+ * Pheal_model - Handles data retrieval and processing of EvE API
+ * @author Ben Cole <wengole@gmail.com>
+ */
+class Pheal_model extends CI_Model {
 
     var $errorMessage;
-    var $server;
     var $blues;
 
-    function User() {
+    function __construct() {
         parent::__construct();
-        $initData = new Ice_InitializationData;
-        $initData->properties = Ice_createProperties();
-        $initData->properties->setProperty('Ice.ImplicitContext', 'Shared');
-        $ICE = Ice_initialize($initData);
-        $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
-        $this->server = $meta->getServer($this->config->item('vServerID'));
         $params = array('userid' => NULL, 'key' => NULL);
         $this->load->library('pheal/Pheal', $params);
         spl_autoload_register('Pheal::classload');
@@ -26,6 +22,7 @@ class User extends CI_Model {
     }
 
     /**
+     * getCharacters - Retrieves list of characters on account that are allowed to register
      *
      * @param int $userID EVE User ID for API
      * @param String $apiKey EVE API Key
@@ -58,7 +55,8 @@ class User extends CI_Model {
     }
 
     /**
-     * updateBlues - Updated the stored list of contacts in the DB from API
+     * updateBlues - Update the stored list of contacts in the DB from API
+     *
      * @return bool Did update complete sucessfully?
      */
     function updateBlues() {
@@ -130,6 +128,7 @@ class User extends CI_Model {
 
     /**
      * isBlue - Determine if a given EvE character is blue from it's ID
+     *
      * @param int $charID ID of character to check
      * @return bool Is the character blue? NULL on API error 
      */
@@ -153,6 +152,7 @@ class User extends CI_Model {
 
     /**
      * loadBlues - Get list of blues fom database and store in local variable
+     *
      * @return Array Array of contactIDs where standing is > 0
      */
     function loadBlues() {
