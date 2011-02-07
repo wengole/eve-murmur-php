@@ -3,14 +3,12 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
-require_once 'Ice.php';
-require_once APPPATH . 'libraries/Murmur_1.2.2.php';
-
 /**
  * Register - Shows basic EvE API registration form and processes Mumble registration
  *
  * @author Ben Cole <wengole@gmail.com>
  * @property Pheal_model $Pheal_model
+ * @property Murmur_model $Murmur_model
  */
 class Register extends CI_Controller {
 
