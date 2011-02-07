@@ -51,7 +51,7 @@ class Pheal_model extends CI_Model {
             }
         }
         log_message('debug', 'Returning characters');
-        return array_unique($characters);
+        return $characters;
     }
 
     /**

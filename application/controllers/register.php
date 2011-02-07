@@ -7,14 +7,17 @@ require_once 'Ice.php';
 require_once APPPATH . 'libraries/Murmur_1.2.2.php';
 
 /**
- * @property User $User
+ * Register - Shows basic EvE API registration form and processes Mumble registration
+ *
+ * @author Ben Cole <wengole@gmail.com>
+ * @property Pheal_model $Pheal_model
  */
 class Register extends CI_Controller {
 
     function __construct() {
         parent::__construct();
         $this->load->helper(array('html'));
-        $this->load->model('User');
+        $this->load->model(array('Pheal_model', 'Murmur_model'));
     }
 
     function index() {
@@ -53,21 +56,23 @@ class Register extends CI_Controller {
         $apiKey = $this->input->post('apikey');
         $charID = $this->input->post('charid');
         $password = $this->input->post('password');
-        if (!$charID && !$password && $password != "") {
+        if (empty($charID)) {
             log_message('debug', 'Requesting characters for ' . $userID);
-            $characters = $this->User->getCharacters($userID, $apiKey);
+            $characters = $this->Pheal_model->getCharacters($userID, $apiKey);
             if ($characters) {
                 log_message('debug', 'Got characteres, returning JSON');
                 echo json_encode($characters);
             } else {
-                log_message('error', 'Pheal: ' . $this->User->errorMessage);
-                echo json_encode(array('error' => $this->User->errorMessage));
+                log_message('error', 'Pheal: ' . $this->Pheal_model->errorMessage);
+                echo json_encode(array('type' => 'error', 'message' => $this->Pheal_model->errorMessage));
             }
-        } else {
+        } elseif (!empty($charID) && !empty($password)) {
             log_message('debug', 'Registering user');
-            log_message('info', 'CharID: '.$charID);
-            log_message('info', 'Password: '.$password);
-            echo json_encode(array('success' => 'User registered'));
+            log_message('info', 'CharID: ' . $charID);
+            log_message('info', 'Password: ' . $password);
+            echo json_encode(array('type' => 'success', 'message' => 'User registered'));
+        } else {
+            echo json_encode(array('type' => 'error', 'message' => 'No valid character or password'));
         }
     }
 
