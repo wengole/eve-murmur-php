@@ -9,48 +9,61 @@
             $(document).ready(function() {
                 $('#userIdInput').keyup(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#userIdInput').mouseup(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#userIdInput').blur(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#apiInput').keyup(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#apiInput').mouseup(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }                });
                 $('#apiInput').blur(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }                });
                 $('#password1').keyup(function(){
                     if(validField('#password1', /^\w{5,}$/)){
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
@@ -58,35 +71,43 @@
                     if(validField('#password1', /^\w{5,}$/)){
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }                });
-                $('#password').blur(function(){
+                $('#password1').blur(function(){
                     if(validField('#password1', /^\w{5,}$/)){
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }                });
                 $('#password2').keyup(function(){
                     $(this).removeClass('invalidinput validinput');
                     if($(this).val() == $('#password1').val()){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#password2').mouseup(function(){
                     $(this).removeClass('invalidinput validinput');
                     if($(this).val() == $('#password1').val()){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
                 $('#password2').blur(function(){
                     $(this).removeClass('invalidinput validinput');
                     if($(this).val() == $('#password1').val()){
+                        $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
                     } else {
+                        $('#submitButton').attr('disabled', true);
                         $(this).addClass('invalidinput');
                     }
                 });
@@ -103,6 +124,7 @@
                         if($('#password2').val().length >= 5 && $('#password1').val() == $('#password2').val()){
 
                         } else {
+                            $('#submitButton').attr('disabled', true);
                             $('#charDiv').show('fast');
                             $('#charSel').empty();
                             $(data).each(function(i) {
@@ -147,7 +169,7 @@
                     <p>Confim Password:</p>
                     <input type="password" class="userinput" name="password2" id="password2">
                 </div>
-                <button name="save" type="submit" class="positive" ><img src="http://www.redskymorning.com/eve-murmur2/images/apply2.png" alt=""/>Submit</button> 
+                <button name="save" type="submit" class="positive" id="submitButton"><img src="http://www.redskymorning.com/eve-murmur2/images/apply2.png" alt=""/>Submit</button>
             </div>
         </form>
     </body>
