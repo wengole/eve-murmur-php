@@ -52,6 +52,8 @@
                         $(this).addClass('invalidinput');
                     }                });
                 $('#apiInput').blur(function(){
+                    var key = $.trim($('#apiInput').val());
+                    $('#apiInput').val(key);
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
                         $('#submitButton').attr('disabled', false);
                         $(this).addClass('validinput');
