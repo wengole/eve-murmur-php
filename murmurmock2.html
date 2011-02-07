@@ -7,79 +7,62 @@
         <script src="eve-murmur2/js/jquery-1.5.min.js" type="text/javascript" charset="utf-8"></script>
         <script type="text/javascript" charset="utf-8">
             $(document).ready(function() {
+
                 $('#userIdInput').keyup(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }
                 });
                 $('#userIdInput').mouseup(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }
                 });
                 $('#userIdInput').blur(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }
                 });
                 $('#apiInput').keyup(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }
                 });
                 $('#apiInput').mouseup(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }                });
                 $('#apiInput').blur(function(){
                     if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
                         $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }                });
                 $('#password1').keyup(function(){
                     if(validField('#password1', /^\w{5,}$/)){
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }
                 });
                 $('#password1').mouseup(function(){
                     if(validField('#password1', /^\w{5,}$/)){
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }                });
                 $('#password1').blur(function(){
                     if(validField('#password1', /^\w{5,}$/)){
-                        $(this).addClass('validinput');
                     } else {
                         $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
                     }                });
                 $('#password2').keyup(function(){
                     $(this).removeClass('invalidinput validinput');
@@ -142,11 +125,18 @@
                 $(field).removeClass('invalidinput validinput');
                 var match = $(field).val().match(regex);
                 if(match == null){
-                    return false;
                     $(field).addClass('invalidinput');
+                    return false;
                 } else {
+                    $(field).addClass('validinput');
                     return true;
                 }
+            }
+
+            function trimmer() {
+                $('body :text').each(function() {
+                    $(this).val() = $(this).val().trim();
+                });
             }
         </script>
     </head>

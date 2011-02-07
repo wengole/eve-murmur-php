@@ -19,34 +19,35 @@ class Register extends CI_Controller {
     }
 
     function index() {
-        $title['title'] = 'Mumble Registration';
-        if ($this->form_validation->run('register1') == FALSE) {
-            $this->load->view('includes/html_head', $title);
-            $this->load->view('register/form_1');
-            $this->load->view('register/form_close');
-            $this->load->view('includes/html_foot');
-        } elseif ($this->form_validation->run('register2') == FALSE) {
-            $this->User->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
-            // If API is OK show the character selection, else show API request
-            if ($characters != FALSE) {
-                $this->load->view('includes/html_head', $title);
-                $this->load->view('register/form_1');
-                $this->load->view('register/form_2', $characters);
-                $this->load->view('register/form_close');
-                $this->load->view('includes/html_foot');
-            } else {
-                $this->load->view('includes/html_head', $title);
-                $this->load->view('register/form_1');
-                $this->load->view('register/form_close');
-                $this->load->view('includes/html_foot');
-            }
-        } else {
-            // TODO: _getdata to populate registered view
-            // Do this in the if statement
-            $this->load->view('includes/html_head', $title);
-            $this->load->view('register/registered');
-            $this->load->view('includes/html_foot');
-        }
+        echo "Work in progress!";
+//        $title['title'] = 'Mumble Registration';
+//        if ($this->form_validation->run('register1') == FALSE) {
+//            $this->load->view('includes/html_head', $title);
+//            $this->load->view('register/form_1');
+//            $this->load->view('register/form_close');
+//            $this->load->view('includes/html_foot');
+//        } elseif ($this->form_validation->run('register2') == FALSE) {
+//            $this->User->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
+//            // If API is OK show the character selection, else show API request
+//            if ($characters != FALSE) {
+//                $this->load->view('includes/html_head', $title);
+//                $this->load->view('register/form_1');
+//                $this->load->view('register/form_2', $characters);
+//                $this->load->view('register/form_close');
+//                $this->load->view('includes/html_foot');
+//            } else {
+//                $this->load->view('includes/html_head', $title);
+//                $this->load->view('register/form_1');
+//                $this->load->view('register/form_close');
+//                $this->load->view('includes/html_foot');
+//            }
+//        } else {
+//            // TODO: _getdata to populate registered view
+//            // Do this in the if statement
+//            $this->load->view('includes/html_head', $title);
+//            $this->load->view('register/registered');
+//            $this->load->view('includes/html_foot');
+//        }
     }
 
     function submit() {
