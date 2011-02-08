@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Pheal_model - Handles data retrieval and processing of EvE API
  * @author Ben Cole <wengole@gmail.com>
@@ -165,6 +166,53 @@ class Pheal_model extends CI_Model {
             $blues[] = $blue['contactID'];
         }
         return $blues;
+    }
+
+    /**
+     * getUserFromOldDB() - Temporary function for getting user from previous version's database
+     * 
+     * @param int $murmurUserID 
+     * @return Array Associative array of one user (murmruUserID, characterID, userID)
+     */
+    function getUserFromOldDB($murmurUserID) {
+        $config['hostname'] = "localhost";
+        $config['username'] = "rsm";
+        $config['password'] = "RSMAdm1n";
+        $config['database'] = "murmur2";
+        $config['dbdriver'] = "mysql";
+        $config['dbprefix'] = "";
+        $config['pconnect'] = FALSE;
+        $config['db_debug'] = TRUE;
+        $config['cache_on'] = FALSE;
+        $config['cachedir'] = "";
+        $config['char_set'] = "utf8";
+        $config['dbcollat'] = "utf8_general_ci";
+
+        $DB2 = $this->load->database($config, TRUE);
+        return $DB2->get_where('utilMurmur', array('murmurUserID' => $murmurUserID));
+    }
+
+    /**
+     * getAllUsersOldDB() - Temporary function for getting all users from previous version's database
+     * 
+     * @return Array Associative array of all users (murmurUserID, characterID, userID)
+     */
+    function getAllUsersOldDB() {
+        $config['hostname'] = "localhost";
+        $config['username'] = "rsm";
+        $config['password'] = "RSMAdm1n";
+        $config['database'] = "murmur2";
+        $config['dbdriver'] = "mysql";
+        $config['dbprefix'] = "";
+        $config['pconnect'] = FALSE;
+        $config['db_debug'] = TRUE;
+        $config['cache_on'] = FALSE;
+        $config['cachedir'] = "";
+        $config['char_set'] = "utf8";
+        $config['dbcollat'] = "utf8_general_ci";
+
+        $DB2 = $this->load->database($config, TRUE);
+        return $DB2->get('utilMurmur');
     }
 
 }

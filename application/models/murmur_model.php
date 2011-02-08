@@ -6,6 +6,7 @@
  */
 class Murmur_model extends CI_Model {
 
+    var $meta;
     var $server;
 
     function __construct() {
@@ -14,8 +15,18 @@ class Murmur_model extends CI_Model {
         $initData->properties = Ice_createProperties();
         $initData->properties->setProperty('Ice.ImplicitContext', 'Shared');
         $ICE = Ice_initialize($initData);
-        $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
-        $this->server = $meta->getServer($this->config->item('vServerID'));
+        $this->meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
+    }
+
+    /**
+     * getUserName() - Retrieves associative array of userIDs to usernames from Murmur
+     * 
+     * @param int $vServerID ID of Murmur virtual server
+     * @return Array NameMap userID => username
+     */
+    function getUserNames($vServerID) {
+        $this->server = $this->meta->getServer($vServerID);
+        return $this->server->getRegisteredUsers();
     }
 
 }
