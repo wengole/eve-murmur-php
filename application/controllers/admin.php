@@ -14,9 +14,17 @@ class Admin extends CI_Controller {
 
     function __construct() {
         parent::__construct();
+        $this->load->model(array('Pheal_model', 'Murmur_model'));
     }
 
-    
+    function import() {
+        // Murmur vServer to import from
+        $importFrom = 4;
+        $murmurUsers = $this->Murmur_model->getUsers($importFrom);
+        foreach ($murmurUsers as $murmurUser) {
+            $eveUser = $this->Pheal_model->getUserFromOldDB($murmurUser['murmurUserID']);
+        }
+    }
 
 }
 
