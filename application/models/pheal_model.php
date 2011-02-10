@@ -11,8 +11,7 @@ class Pheal_model extends CI_Model {
 
     function __construct() {
         parent::__construct();
-        $params = array('userid' => NULL, 'key' => NULL);
-        $this->load->library('pheal/Pheal', $params);
+        $this->load->library('pheal/Pheal');
         spl_autoload_register('Pheal::classload');
         PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
         PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
@@ -169,50 +168,48 @@ class Pheal_model extends CI_Model {
     }
 
     /**
-     * getUserFromOldDB() - Temporary function for getting user from previous version's database
+     * updateUserDetails - Updates the eveUser table with as much data as possible from the API
      * 
-     * @param int $murmurUserID 
-     * @return Array Associative array of one user (murmruUserID, characterID, userID)
+     * @param int $murmurUserID Murmur User ID
+     * @param int $eveCharID EVE API User ID
+     * @return bool Did the update succeed?
      */
-    function getUserFromOldDB($murmurUserID) {
-        $config['hostname'] = "localhost";
-        $config['username'] = "rsm";
-        $config['password'] = "RSMAdm1n";
-        $config['database'] = "murmur2";
-        $config['dbdriver'] = "mysql";
-        $config['dbprefix'] = "";
-        $config['pconnect'] = FALSE;
-        $config['db_debug'] = TRUE;
-        $config['cache_on'] = FALSE;
-        $config['cachedir'] = "";
-        $config['char_set'] = "utf8";
-        $config['dbcollat'] = "utf8_general_ci";
-
-        $DB2 = $this->load->database($config, TRUE);
-        return $DB2->get_where('utilMurmur', array('murmurUserID' => $murmurUserID));
-    }
-
-    /**
-     * getAllUsersOldDB() - Temporary function for getting all users from previous version's database
-     * 
-     * @return Array Associative array of all users (murmurUserID, characterID, userID)
-     */
-    function getAllUsersOldDB() {
-        $config['hostname'] = "localhost";
-        $config['username'] = "rsm";
-        $config['password'] = "RSMAdm1n";
-        $config['database'] = "murmur2";
-        $config['dbdriver'] = "mysql";
-        $config['dbprefix'] = "";
-        $config['pconnect'] = FALSE;
-        $config['db_debug'] = TRUE;
-        $config['cache_on'] = FALSE;
-        $config['cachedir'] = "";
-        $config['char_set'] = "utf8";
-        $config['dbcollat'] = "utf8_general_ci";
-
-        $DB2 = $this->load->database($config, TRUE);
-        return $DB2->get('utilMurmur');
+    function updateUserDetails($murmurUserID = NULL, $eveCharID = NULL) {
+        if (isset($murmurUserID) && !isset($eveCharID)) {
+            log_message('debug', 'Getting characterID from DB for ' . $murmurUserID);
+            $this->db->select('eveCharID')->from('eveUser')->where('murmurUserID', $murmurUserID);
+            $query = $this->db->get();
+            $row = $query->row();
+            $eveCharID = $row->eveCharID;
+        } elseif(!isset($murmurUserID)) {
+            log_message('error', 'Missing parameter for updateUserDetails');
+            return FALSE;
+        }
+        log_message('debug', 'Pheal->CharacterInfo(): ' . $eveCharID);
+        $pheal = new Pheal();
+        $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $eveCharID));
+        log_message('debug', 'Pheal->CorporationSheet(): ' . $charInfo->corporationID);
+        $corpSheet = $pheal->corpScope->CorporationSheet(array('corporationID' => $charInfo->corporationID));
+        $update = array(
+            'eveCharName' => $charInfo->characterName,
+            'eveCorpID' => $charInfo->corporationID,
+            'eveCorpName' => $charInfo->corporation,
+            'eveCorpTicker' => $corpSheet->ticker,
+            'eveAllyID' => $charInfo->allianceID,
+            'eveAllyName' => $charInfo->alliance
+        );
+        log_message('debug', 'Updating DB for ' . $murmurUserID);
+        $this->db->trans_start();
+        $this->db->where('murmurUserID', $murmurUserID);
+        $this->db->update('eveUser', $update);
+        $this->db->trans_complete();
+        if ($this->db->trans_status() === FALSE) {
+            log_message('error', 'Failed to update DB: ' . mysql_error());
+            return FALSE;
+        } else {
+            log_message('debug', 'Successfully updated DB for ' . $murmurUserID);
+            return TRUE;
+        }
     }
 
 }
