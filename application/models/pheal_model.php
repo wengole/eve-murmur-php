@@ -180,6 +180,10 @@ class Pheal_model extends CI_Model {
             $this->db->select('eveCharID')->from('eveUser')->where('murmurUserID', $murmurUserID);
             $query = $this->db->get();
             $row = $query->row();
+            if($query->num_rows() < 1) {
+                log_message('error', 'Murmur User '.$murmurUserID.' not in DB');
+                return FALSE;
+            }
             $eveCharID = $row->eveCharID;
         } elseif(!isset($murmurUserID)) {
             log_message('error', 'Missing parameter for updateUserDetails');

@@ -31,7 +31,7 @@ class Murmur_model extends CI_Model {
         log_message('debug', 'Getting registered users on server: ' . $vServerID);
         try {
             $this->server = $this->meta->getServer($vServerID);
-            $users = $this->server->getRegisteredUsers();
+            $users = $this->server->getRegisteredUsers('');
         } catch (Exception $exc) {
             log_message('error', 'Murmur: ' . $exc->getMessage());
             return NULL;
@@ -63,7 +63,7 @@ class Murmur_model extends CI_Model {
             'uesrEmail' => $registration[1],
             'userComment' => $registration[2],
             'userHash' => $registration[3],
-            'userPassword' => $registration[4],
+            //'userPassword' => $registration[4],
             'userLastActive' => $registration[5]
         );
         return $userInfo;
@@ -81,7 +81,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', 'Updating registration for: ' . $newUserInfo['username']);
+        log_message('debug', 'Updating registration for: ' . $newUserInfo[0]);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->updateRegistration($murmurUserID, $newUserInfo);
@@ -89,6 +89,7 @@ class Murmur_model extends CI_Model {
             log_message('error', 'Murmur: '.$exc->getMessage());
             return FALSE;
         }
+        return TRUE;
     }
 
 }

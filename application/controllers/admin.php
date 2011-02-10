@@ -31,29 +31,36 @@ class Admin extends CI_Controller {
                     log_message('error', 'Failed to get UserInfo for: ' . $username);
                     continue;
                 } else {
-                    $this->db->select('eveCorpTicker, eveCharacterName')->from('eveUser')->where('murmurUserID', $userid);
+                    $this->db->select('eveCorpTicker, eveCharName')->from('eveUser')->where('murmurUserID', $userid);
                     $query = $this->db->get();
+                    //log_message('info', $this->db->last_query());
                     $row = $query->row();
-                    if ($row->eveCorpTicker == NULL) {
-                        $this->Pheal_model->updateUserDetails($userid);
+                    if ($query->num_rows() < 1 || !isset($row->corpTicker)) {
+                        log_message('debug', 'Updating DB for user: ' . $userid);
+                        if (!$this->Pheal_model->updateUserDetails($userid)) {
+                            log_message('error', 'Failed to update eve user: ' . $username);
+                            continue;
+                        }
                         $this->db->select('eveCorpTicker, eveCharName')->from('eveUser')->where('murmurUserID', $userid);
                         $query = $this->db->get();
                         $row = $query->row();
-                    } 
-                    $newUserName = '['.$row->eveCorpTicker.'] '.$row->eveCharName;
-                    log_message('info','New Username: '.$newUserName);
-                    log_message('info','Old Username: '.$userInfo['username']);
-                    if ($newUserName != $userInfo['username']){
+                    }
+                    $newUserName = '[' . $row->eveCorpTicker . '] ' . $row->eveCharName;
+                    log_message('info', 'New Username: ' . $newUserName);
+                    log_message('info', 'Old Username: ' . $userInfo['username']);
+                    if ($newUserName != $userInfo['username']) {
+                        if(!isset($userInfo['userEmail']))
+                            $userInfo['userEmail'] = "";
                         $newUserInfo = array(
                             $newUserName,
                             $userInfo['userEmail'],
                             $userInfo['userComment'],
                             $userInfo['userHash']
                         );
-                        if(!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)){
-                            log_message('error', 'Failed to update user: '.$username);
+                        if (!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)) {
+                            log_message('error', 'Failed to update registration: ' . $username);
                         } else {
-                            log_message('debug', 'Updated '.$username.' to '.$newUserName);
+                            log_message('debug', 'Updated ' . $username . ' to ' . $newUserName);
                         }
                     }
                 }
