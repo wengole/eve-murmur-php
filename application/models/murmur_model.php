@@ -6,6 +6,7 @@
  */
 class Murmur_model extends CI_Model {
 
+    var $meta;
     var $server;
 
     function __construct() {
@@ -14,8 +15,81 @@ class Murmur_model extends CI_Model {
         $initData->properties = Ice_createProperties();
         $initData->properties->setProperty('Ice.ImplicitContext', 'Shared');
         $ICE = Ice_initialize($initData);
-        $meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
-        $this->server = $meta->getServer($this->config->item('vServerID'));
+        $this->meta = Murmur_MetaPrxHelper::checkedCast($ICE->stringToProxy($this->config->item('iceProxy')));
+    }
+
+    /**
+     * getUserNames - Retrieves associative array of userIDs to usernames from Murmur
+     * 
+     * @param int $vServerID ID of Murmur virtual server
+     * @return Array NameMap userID => username
+     */
+    function getUserNames($vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('debug', 'Getting registered users on server: ' . $vServerID);
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $users = $this->server->getRegisteredUsers('');
+        } catch (Exception $exc) {
+            log_message('error', 'Murmur: ' . $exc->getMessage());
+            return NULL;
+        }
+        return $users;
+    }
+
+    /**
+     * getUserInfo - Gets the registration information of one user from Murmur
+     * 
+     * @param int $murmurUserID Murmur User ID
+     * @param int $vServerID Murmur Server ID
+     * @return Array Murmur::UserInfo
+     */
+    function getUserInfo($murmurUserID, $vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('debug', 'Getting registration for: ' . $murmurUserID);
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $registration = $this->server->getRegistration($murmurUserID);
+        } catch (Exception $exc) {
+            log_message('error', 'Murmur: ' . $exc->getMessage());
+            return NULL;
+        }
+        $userInfo = array(
+            'username' => $registration[0],
+            'uesrEmail' => $registration[1],
+            'userComment' => $registration[2],
+            'userHash' => $registration[3],
+            //'userPassword' => $registration[4],
+            'userLastActive' => $registration[5]
+        );
+        return $userInfo;
+    }
+
+    /**
+     * updateUserInfo - Updates registration information of one user on Murmur
+     * 
+     * @param int $murmurUserID Murmur User ID
+     * @param enum $newUserInfo Enumeration of username, email, comment and hash
+     * @param int $vServerID Murmur Server ID
+     * @return bool Successfully updated user?
+     */
+    function updateUserInfo($murmurUserID, $newUserInfo, $vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('debug', 'Updating registration for: ' . $newUserInfo[0]);
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $this->server->updateRegistration($murmurUserID, $newUserInfo);
+        } catch (Exception $exc) {
+            log_message('error', 'Murmur: '.$exc->getMessage());
+            return FALSE;
+        }
+        return TRUE;
     }
 
 }
