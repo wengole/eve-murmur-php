@@ -4,6 +4,7 @@
  * Murmur_model - Handles data communication with Mumble server (Murmur)
  * @author Ben Cole <wengole@gmail.com>
  */
+
 class Murmur_model extends CI_Model {
 
     var $meta;

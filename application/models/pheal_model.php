@@ -3,6 +3,7 @@
 /**
  * Pheal_model - Handles data retrieval and processing of EvE API
  * @author Ben Cole <wengole@gmail.com>
+ * @property Murmur_model $Murmur_model
  */
 class Pheal_model extends CI_Model {
 
@@ -35,8 +36,8 @@ class Pheal_model extends CI_Model {
         try {
             log_message('debug', 'Pheal->Characters()');
             $result = $pheal->accountScope->Characters();
-        } catch (PhealAPIException $exc) {
-            log_message('error', $exc->getMessage());
+        } catch (PhealException $exc) {
+            log_message('error', 'Pheal: ' . $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
             return FALSE;
         }
@@ -65,8 +66,8 @@ class Pheal_model extends CI_Model {
         $pheal = new Pheal($params);
         try {
             $result = $pheal->corpScope->ContactList(array('characterID' => $this->config->item('blueCharID')));
-        } catch (PhealAPIException $exc) {
-            log_message('error', $exc->getMessage());
+        } catch (PhealException $exc) {
+            log_message('error', 'Pheal: ' . $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
             return FALSE;
         }
@@ -138,7 +139,7 @@ class Pheal_model extends CI_Model {
         try {
             $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $charID));
         } catch (PhealException $exc) {
-            log_message('error', $exc->getMessage());
+            log_message('error', 'Pheal: ' . $exc->getMessage());
             return NULL;
         }
         if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues)
@@ -180,40 +181,84 @@ class Pheal_model extends CI_Model {
             $this->db->select('eveCharID')->from('eveUser')->where('murmurUserID', $murmurUserID);
             $query = $this->db->get();
             $row = $query->row();
-            if($query->num_rows() < 1) {
-                log_message('error', 'Murmur User '.$murmurUserID.' not in DB');
-                return FALSE;
+            if ($query->num_rows() < 1) {
+                log_message('error', 'Murmur User ' . $murmurUserID . ' not in DB');
+                $userInfo = $this->Murmur_model->getUserInfo($murmurUserID);
+                if (preg_match('/^\[.+\]/', $userInfo['username']) > 0) {
+                    log_message('debug', 'Username has ticker');
+                    preg_match_all('/(?<=\]\s).+/', $userInfo['username'], $matches);
+                    $charName = $matches[0][0];
+                } else {
+                    log_message('debug', 'Username doesn\'t have ticker');
+                    $charName = $userInfo['username'];
+                }
+                $eveCharID = $this->lookupCharID($charName);
+                if (!$eveCharID)
+                    return FALSE;
+            } else {
+                $eveCharID = $row->eveCharID;
             }
-            $eveCharID = $row->eveCharID;
-        } elseif(!isset($murmurUserID)) {
+        } elseif (!isset($murmurUserID)) {
             log_message('error', 'Missing parameter for updateUserDetails');
             return FALSE;
         }
-        log_message('debug', 'Pheal->CharacterInfo(): ' . $eveCharID);
         $pheal = new Pheal();
-        $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $eveCharID));
-        log_message('debug', 'Pheal->CorporationSheet(): ' . $charInfo->corporationID);
-        $corpSheet = $pheal->corpScope->CorporationSheet(array('corporationID' => $charInfo->corporationID));
+        try {
+            log_message('debug', 'Pheal->CharacterInfo(): ' . $eveCharID);
+            $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $eveCharID));
+            log_message('debug', 'Pheal->CorporationSheet(): ' . $charInfo->corporationID);
+            $corpSheet = $pheal->corpScope->CorporationSheet(array('corporationID' => $charInfo->corporationID));
+        } catch (PhealException $exc) {
+            log_message('error', 'Pheal: ' . $exc->getMessage());
+            return FALSE;
+        }
         $update = array(
             'eveCharName' => $charInfo->characterName,
             'eveCorpID' => $charInfo->corporationID,
             'eveCorpName' => $charInfo->corporation,
             'eveCorpTicker' => $corpSheet->ticker,
             'eveAllyID' => $charInfo->allianceID,
-            'eveAllyName' => $charInfo->alliance
+            'eveAllyName' => $charInfo->alliance,
         );
         log_message('debug', 'Updating DB for ' . $murmurUserID);
         $this->db->trans_start();
         $this->db->where('murmurUserID', $murmurUserID);
         $this->db->update('eveUser', $update);
         $this->db->trans_complete();
-        if ($this->db->trans_status() === FALSE) {
+        log_message('info', $this->db->last_query());
+        $errMsg = mysql_error();
+        if ($this->db->trans_status() === FALSE || $this->db->affected_rows() == 0 || !empty($errMsg)) {
             log_message('error', 'Failed to update DB: ' . mysql_error());
-            return FALSE;
-        } else {
-            log_message('debug', 'Successfully updated DB for ' . $murmurUserID);
-            return TRUE;
+            $update['murmurUserID'] = $murmurUserID;
+            $update['eveCharID'] = $eveCharID;
+            $this->db->insert('eveUser', $update);
+            log_message('info', $this->db->last_query());
+            if ($this->db->trans_status() === FALSE) {
+                log_message('error', 'Failed to insert into DB: ' . mysql_error());
+                return FALSE;
+            }
         }
+        log_message('debug', 'Successfully updated DB for ' . $murmurUserID);
+        return TRUE;
+    }
+
+    /**
+     * lookupCharID - Fetch character ID from API when all we have is a name
+     *
+     * @param String $charName Character Name
+     * @return bool Successfully get characterID?
+     */
+    function lookupCharID($charName) {
+        log_message('debug', 'Pheal->CharacterID(): ' . $charName);
+        $pheal = new Pheal();
+        try {
+            $result = $pheal->eveScope->CharacterID(array('names' => $charName));
+        } catch (PhealException $exc) {
+            log_message('error', 'Pheal: ' . $exc->getMessage());
+            return FALSE;
+        }
+        $charID = $result->characters[0]->characterID;
+        return $charID;
     }
 
 }

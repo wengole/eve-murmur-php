@@ -33,9 +33,9 @@ class Admin extends CI_Controller {
                 } else {
                     $this->db->select('eveCorpTicker, eveCharName')->from('eveUser')->where('murmurUserID', $userid);
                     $query = $this->db->get();
-                    //log_message('info', $this->db->last_query());
+                    log_message('info', $this->db->last_query());
                     $row = $query->row();
-                    if ($query->num_rows() < 1 || !isset($row->corpTicker)) {
+                    if ($query->num_rows() < 1 || !isset($row->eveCorpTicker)) {
                         log_message('debug', 'Updating DB for user: ' . $userid);
                         if (!$this->Pheal_model->updateUserDetails($userid)) {
                             log_message('error', 'Failed to update eve user: ' . $username);
@@ -43,13 +43,14 @@ class Admin extends CI_Controller {
                         }
                         $this->db->select('eveCorpTicker, eveCharName')->from('eveUser')->where('murmurUserID', $userid);
                         $query = $this->db->get();
+                        log_message('info', $this->db->last_query());
                         $row = $query->row();
                     }
                     $newUserName = '[' . $row->eveCorpTicker . '] ' . $row->eveCharName;
                     log_message('info', 'New Username: ' . $newUserName);
                     log_message('info', 'Old Username: ' . $userInfo['username']);
                     if ($newUserName != $userInfo['username']) {
-                        if(!isset($userInfo['userEmail']))
+                        if (!isset($userInfo['userEmail']))
                             $userInfo['userEmail'] = "";
                         $newUserInfo = array(
                             $newUserName,
