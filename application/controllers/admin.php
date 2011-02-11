@@ -18,6 +18,7 @@ class Admin extends CI_Controller {
     }
 
     function renameAll() {
+        $output = array();
         $users = $this->Murmur_model->getUserNames();
         if ($users == NULL) {
             log_message('error', 'Failed to get users from Murmur');
@@ -61,7 +62,8 @@ class Admin extends CI_Controller {
                         if (!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)) {
                             log_message('error', 'Failed to update registration: ' . $username);
                         } else {
-                            log_message('debug', 'Updated ' . $username . ' to ' . $newUserName);
+                            log_message('debug', 'Updated ' . $userInfo['username'] . ' to ' . $newUserName);
+                            $output[] = '';
                         }
                     }
                 }
