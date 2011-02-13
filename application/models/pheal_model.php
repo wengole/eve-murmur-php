@@ -208,6 +208,21 @@ class Pheal_model extends CI_Model {
             $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $eveCharID));
             log_message('debug', 'Pheal->CorporationSheet(): ' . $charInfo->corporationID);
             $corpSheet = $pheal->corpScope->CorporationSheet(array('corporationID' => $charInfo->corporationID));
+        } catch (PhealAPIException $exc) {
+            log_message('error', 'Pheal: ' . $exc->getMessage());
+            $update = array(
+                'apiLastChecked' => date('Y-m-d H:i:s'),
+                'apiLastCode' => $exc->code,
+                'apiLastMessage' => $exc->getMessage()
+            );
+            $this->db->trans_start();
+            $this->db->where('murmurUserID', $murmurUserID);
+            $this->db->update('eveUser', $update);
+            $this->db->trans_complete();
+            log_message('info', $this->db->last_query());
+            if ($this->db->trans_status() === FALSE || $this->db->affected_rows() == 0 || !empty($errMsg))
+                log_message('error', 'Failed to update DB: ' . mysql_error());
+            return FALSE;
         } catch (PhealException $exc) {
             log_message('error', 'Pheal: ' . $exc->getMessage());
             return FALSE;
@@ -219,6 +234,7 @@ class Pheal_model extends CI_Model {
             'eveCorpTicker' => $corpSheet->ticker,
             'eveAllyID' => $charInfo->allianceID,
             'eveAllyName' => $charInfo->alliance,
+            'apiLastChecked' => date('Y-m-d H:i:s')
         );
         log_message('debug', 'Updating DB for ' . $murmurUserID);
         $this->db->trans_start();
@@ -228,7 +244,7 @@ class Pheal_model extends CI_Model {
         log_message('info', $this->db->last_query());
         $errMsg = mysql_error();
         if ($this->db->trans_status() === FALSE || $this->db->affected_rows() == 0 || !empty($errMsg)) {
-            log_message('error', 'Failed to update DB: ' . mysql_error());
+            log_message('error', 'Failed to update DB, trying INSERT');
             $update['murmurUserID'] = $murmurUserID;
             $update['eveCharID'] = $eveCharID;
             $this->db->insert('eveUser', $update);

@@ -4,7 +4,6 @@
  * Murmur_model - Handles data communication with Mumble server (Murmur)
  * @author Ben Cole <wengole@gmail.com>
  */
-
 class Murmur_model extends CI_Model {
 
     var $meta;
@@ -87,7 +86,29 @@ class Murmur_model extends CI_Model {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->updateRegistration($murmurUserID, $newUserInfo);
         } catch (Exception $exc) {
-            log_message('error', 'Murmur: '.$exc->getMessage());
+            log_message('error', 'Murmur: ' . $exc->getMessage());
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    /**
+     * unregisterUser - Remove one user from Murmur
+     *
+     * @param int $murmurUserID Murmur User ID
+     * @param int $vServerID Murmur server ID
+     * @return bool Did user get unregistered successfully?
+     */
+    function unregisterUser($murmurUserID, $vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('debug', 'Unregistering ID: ' . $murmurUserID);
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $this->server->unregisterUser($murmurUserID);
+        } catch (Exception $exc) {
+            log_message('error', 'Murmur: ' . $exc->getTraceAsString());
             return FALSE;
         }
         return TRUE;
