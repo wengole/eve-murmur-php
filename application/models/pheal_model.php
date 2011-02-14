@@ -106,7 +106,7 @@ class Pheal_model extends CI_Model {
             }
             if (!empty($contacts)) {
                 $this->db->trans_start();
-                $this->db->delete('contact', array('contactID >' => 0));
+                $this->db->truncate('contact');
                 log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                 $mysqlError = mysql_error();
                 if ($mysqlError != "")
@@ -321,7 +321,8 @@ class Pheal_model extends CI_Model {
         }
         $alliances = $alliances->alliances;
         $this->db->trans_start();
-        $this->db->delete('eveAlliance');
+        $this->db->truncate('eveAlliance');
+        log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
         foreach ($alliances as $alliance) {
             $insert = array(
                 'allianceID' => $alliance->allianceID,
@@ -332,10 +333,11 @@ class Pheal_model extends CI_Model {
                 'startDate' => $alliance->startDate
             );
             $this->db->insert('eveAlliance', $insert);
+            log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
         }
         $this->db->trans_complete();
         if ($this->db->trans_status() === FALSE) {
-            log_message('error', '<' . __FUNCTION__ . '> Failed to update alliance list');
+            log_message('error', '<' . __FUNCTION__ . '> Failed to update alliance list: ' . mysql_error());
             return FALSE;
         } else {
             log_message('debug', '<' . __FUNCTION__ . '> Sucessfully updated alliance list');
