@@ -7,7 +7,6 @@
  */
 class Pheal_model extends CI_Model {
 
-    var $errorMessage;
     var $blues;
 
     function __construct() {
@@ -16,10 +15,6 @@ class Pheal_model extends CI_Model {
         spl_autoload_register('Pheal::classload');
         PhealConfig::getInstance()->cache = new PhealFileCache($this->config->item('phealCache'));
         PhealConfig::getInstance()->log = new PhealFileLog($this->config->item('phealLog'));
-        log_message('debug', 'Updating blues to check characters');
-        // Don't do this every time
-        // $this->updateBlues();
-        $this->blues = $this->loadBlues();
     }
 
     /**
@@ -30,28 +25,27 @@ class Pheal_model extends CI_Model {
      * @return Array Array of characters that are allowed to register (blue)
      */
     function getCharacters($userID = NULL, $apiKey = NULL) {
-        $this->errorMessage = "";
         $params = array('userid' => $userID, 'key' => $apiKey, 'scope' => 'account');
         $pheal = new Pheal($params);
         try {
-            log_message('debug', 'Pheal->Characters()');
+            log_message('debug', '<' . __FUNCTION__ . '> Pheal->Characters()');
             $result = $pheal->accountScope->Characters();
         } catch (PhealException $exc) {
-            log_message('error', 'Pheal: ' . $exc->getMessage());
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
             return FALSE;
         }
         $characters = array();
         foreach ($result->characters as $character) {
-            log_message('info', $character->characterID . ' : ' . $character->name);
+            log_message('info', '<' . __FUNCTION__ . '> ' . $character->characterID . ' : ' . $character->name);
             if ($this->isBlue($character->characterID)) {
-                log_message('info', '...is blue');
+                log_message('info', '<' . __FUNCTION__ . '> ...is blue');
                 $characters[] = array('charid' => (int) $character->characterID, 'name' => (string) $character->name);
             } else {
-                log_message('info', '...is not blue');
+                log_message('info', '<' . __FUNCTION__ . '> ...is not blue');
             }
         }
-        log_message('debug', 'Returning characters');
+        log_message('debug', '<' . __FUNCTION__ . '> Returning characters');
         return $characters;
     }
 
@@ -61,17 +55,27 @@ class Pheal_model extends CI_Model {
      * @return bool Did update complete sucessfully?
      */
     function updateBlues() {
-        $this->errorMessage = "";
+        $this->db->order_by('timestamp', 'DESC');
+        $query = $this->db->get_where('actionLog', array('action' => 'Updated blues'));
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $lastCheck = new DateTime($row->timestamp);
+            $date = new DateTime();
+            $hour_ago = $date->sub(new DateInterval('PT1H'));
+            if ($lastCheck > $hour_ago)
+                return TRUE;
+        }
+        log_message('debug', '<' . __FUNCTION__ . '> Updating contacts');
         $params = array('userid' => $this->config->item('blueUserID'), 'key' => $this->config->item('blueApiKey'));
         $pheal = new Pheal($params);
         try {
             $result = $pheal->corpScope->ContactList(array('characterID' => $this->config->item('blueCharID')));
         } catch (PhealException $exc) {
-            log_message('error', 'Pheal: ' . $exc->getMessage());
-            $this->errorMessage = $exc->getMessage();
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             return FALSE;
         }
         $contacts = array();
+        // TODO: Make this more efficiently coded
         if ($this->config->item('corpOnly')) {
             foreach ($result->corporateContactList as $contact) {
                 $contacts[] = $contact;
@@ -79,21 +83,20 @@ class Pheal_model extends CI_Model {
             if (!empty($contacts)) {
                 $this->db->trans_start();
                 $this->db->delete('contact', array('contactID >' => 0));
-                log_message('info', $this->db->last_query());
+                log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                 $mysqlError = mysql_error();
                 if ($mysqlError != "")
-                    log_message('error', $mysqlError);
+                    log_message('error', '<' . __FUNCTION__ . '> ' . $mysqlError);
                 foreach ($contacts as $contact) {
                     $this->db->insert('contact', $contact);
-                    log_message('info', $this->db->last_query());
+                    log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                     $mysqlError = mysql_error();
                     if ($mysqlError != "")
-                        log_message('error', $mysqlError);
+                        log_message('error', '<' . __FUNCTION__ . '> ' . $mysqlError);
                 }
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
-                    $this->errorMessage = "Failed to update contacts";
-                    log_message('error', $this->errorMessage . ': ' . $this->db->show_error());
+                    log_message('error', '<' . __FUNCTION__ . '> ' . $this->errorMessage . ': ' . mysql_error());
                     return FALSE;
                 }
             }
@@ -103,27 +106,32 @@ class Pheal_model extends CI_Model {
             }
             if (!empty($contacts)) {
                 $this->db->trans_start();
-                $this->db->delete('contact', array('contactID >' => 0));
-                log_message('info', $this->db->last_query());
+                $this->db->truncate('contact');
+                log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                 $mysqlError = mysql_error();
                 if ($mysqlError != "")
-                    log_message('error', $mysqlError);
+                    log_message('error', '<' . __FUNCTION__ . '> ' . $mysqlError);
                 foreach ($contacts as $contact) {
                     $this->db->insert('contact', $contact);
-                    log_message('info', $this->db->last_query());
+                    log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                     $mysqlError = mysql_error();
                     if ($mysqlError != "")
-                        log_message('error', $mysqlError);
+                        log_message('error', '<' . __FUNCTION__ . '> ' . $mysqlError);
                 }
                 $this->db->trans_complete();
                 if ($this->db->trans_status() === FALSE) {
-                    $this->errorMessage = "Failed to update contacts";
                     $mysqlError = mysql_error();
-                    log_message('error', $this->errorMessage . ': ' . $mysqlError);
+                    log_message('error', '<' . __FUNCTION__ . '> Failed to update contacts: ' . $mysqlError);
                     return FALSE;
                 }
             }
         }
+        log_message('debug', '<' . __FUNCTION__ . '> Updating DB action log');
+        $this->db->trans_start();
+        $this->db->insert('actionLog', array('action' => 'Updated blues'));
+        $this->db->trans_complete();
+        if ($this->db->trans_status() === FALSE)
+            log_message('error', '<' . __FUNCTION__ . '> Failed to update action log');
         return TRUE;
     }
 
@@ -134,12 +142,16 @@ class Pheal_model extends CI_Model {
      * @return bool Is the character blue? NULL on API error 
      */
     function isBlue($charID) {
+        if (empty($this->blues)) {
+            log_message('debug', '<' . __FUNCTION__ . '> Loading blues to check characters');
+            $this->blues = $this->loadBlues();
+        }
         $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'account');
         $pheal = new Pheal($params);
         try {
             $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $charID));
         } catch (PhealException $exc) {
-            log_message('error', 'Pheal: ' . $exc->getMessage());
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             return NULL;
         }
         if (in_array($charID, $this->blues) || in_array($charInfo->corporationID, $this->blues)
@@ -157,11 +169,11 @@ class Pheal_model extends CI_Model {
      * @return Array Array of contactIDs where standing is > 0
      */
     function loadBlues() {
-        log_message('debug', 'Loading blues to array');
+        log_message('debug', '<' . __FUNCTION__ . '> Loading blues to array');
         $blues = array();
         $this->db->select('contactID')->where('standing >', 0);
         $query = $this->db->get('contact');
-        log_message('info', $this->db->last_query());
+        log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
         foreach ($query->result_array() as $blue) {
             $blues[] = $blue['contactID'];
         }
@@ -177,39 +189,57 @@ class Pheal_model extends CI_Model {
      */
     function updateUserDetails($murmurUserID = NULL, $eveCharID = NULL) {
         if (isset($murmurUserID) && !isset($eveCharID)) {
-            log_message('debug', 'Getting characterID from DB for ' . $murmurUserID);
+            log_message('debug', '<' . __FUNCTION__ . '> Getting characterID from DB for ' . $murmurUserID);
             $this->db->select('eveCharID')->from('eveUser')->where('murmurUserID', $murmurUserID);
             $query = $this->db->get();
             $row = $query->row();
             if ($query->num_rows() < 1) {
-                log_message('error', 'Murmur User ' . $murmurUserID . ' not in DB');
+                log_message('error', '<' . __FUNCTION__ . '> Murmur User ' . $murmurUserID . ' not in DB');
                 $userInfo = $this->Murmur_model->getUserInfo($murmurUserID);
                 if (preg_match('/^\[.+\]/', $userInfo['username']) > 0) {
-                    log_message('debug', 'Username has ticker');
+                    log_message('debug', '<' . __FUNCTION__ . '> Username has ticker');
                     preg_match_all('/(?<=\]\s).+/', $userInfo['username'], $matches);
                     $charName = $matches[0][0];
                 } else {
-                    log_message('debug', 'Username doesn\'t have ticker');
+                    log_message('debug', '<' . __FUNCTION__ . '> Username doesn\'t have ticker');
                     $charName = $userInfo['username'];
                 }
                 $eveCharID = $this->lookupCharID($charName);
-                if (!$eveCharID)
+                if (!$eveCharID) {
+                    log_message('error', '<' . __FUNCTION__ . '> Unable to lookup character ID');
                     return FALSE;
+                }
             } else {
                 $eveCharID = $row->eveCharID;
             }
-        } elseif (!isset($murmurUserID)) {
-            log_message('error', 'Missing parameter for updateUserDetails');
+        } elseif (!isset($murmurUserID) && !isset($eveCharID)) {
+            log_message('error', '<' . __FUNCTION__ . '> Missing parameter for updateUserDetails');
             return FALSE;
         }
         $pheal = new Pheal();
         try {
-            log_message('debug', 'Pheal->CharacterInfo(): ' . $eveCharID);
+            log_message('debug', '<' . __FUNCTION__ . '> Pheal->CharacterInfo(): ' . $eveCharID);
             $charInfo = $pheal->eveScope->CharacterInfo(array('characterID' => $eveCharID));
-            log_message('debug', 'Pheal->CorporationSheet(): ' . $charInfo->corporationID);
+            log_message('debug', '<' . __FUNCTION__ . '> Pheal->CorporationSheet(): ' . $charInfo->corporationID);
             $corpSheet = $pheal->corpScope->CorporationSheet(array('corporationID' => $charInfo->corporationID));
+        } catch (PhealAPIException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
+            $update = array(
+                'apiLastChecked' => date('Y-m-d H:i:s'),
+                'apiLastCode' => $exc->code,
+                'apiLastMessage' => $exc->getMessage()
+            );
+            $this->db->trans_start();
+            $this->db->where('murmurUserID', $murmurUserID);
+            $this->db->update('eveUser', $update);
+            $this->db->trans_complete();
+            log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
+            $errMsg = mysql_error();
+            if ($this->db->trans_status() === FALSE || !empty($errMsg))
+                log_message('error', '<' . __FUNCTION__ . '> Failed to update DB: ' . mysql_error());
+            return FALSE;
         } catch (PhealException $exc) {
-            log_message('error', 'Pheal: ' . $exc->getMessage());
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             return FALSE;
         }
         $update = array(
@@ -219,26 +249,36 @@ class Pheal_model extends CI_Model {
             'eveCorpTicker' => $corpSheet->ticker,
             'eveAllyID' => $charInfo->allianceID,
             'eveAllyName' => $charInfo->alliance,
+            'apiLastChecked' => date('Y-m-d H:i:s')
         );
-        log_message('debug', 'Updating DB for ' . $murmurUserID);
-        $this->db->trans_start();
-        $this->db->where('murmurUserID', $murmurUserID);
-        $this->db->update('eveUser', $update);
-        $this->db->trans_complete();
-        log_message('info', $this->db->last_query());
-        $errMsg = mysql_error();
-        if ($this->db->trans_status() === FALSE || $this->db->affected_rows() == 0 || !empty($errMsg)) {
-            log_message('error', 'Failed to update DB: ' . mysql_error());
+        $this->updateAllianceList();
+        $query = $this->db->get_where('eveAlliance', array('allianceID' => $charInfo->allianceID));
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $update['eveAllyTicker'] = $row->shortName;
+        }
+        log_message('debug', '<' . __FUNCTION__ . '> Updating DB for ' . $murmurUserID);
+        $query = $this->db->get_where('eveUser', array('murmurUserID' => $murmurUserID));
+        if ($query->num_rows > 0) {
+            $this->db->trans_start();
+            $this->db->where('murmurUserID', $murmurUserID);
+            $this->db->update('eveUser', $update);
+            $this->db->trans_complete();
+            log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
+            $errMsg = mysql_error();
+        }
+        if ($this->db->trans_status() === FALSE || !empty($errMsg) || $query->num_rows < 1) {
+            log_message('error', '<' . __FUNCTION__ . '> Failed to update DB, trying INSERT: ' . mysql_error());
             $update['murmurUserID'] = $murmurUserID;
             $update['eveCharID'] = $eveCharID;
             $this->db->insert('eveUser', $update);
-            log_message('info', $this->db->last_query());
+            log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
             if ($this->db->trans_status() === FALSE) {
-                log_message('error', 'Failed to insert into DB: ' . mysql_error());
+                log_message('error', '<' . __FUNCTION__ . '> Failed to insert into DB: ' . mysql_error());
                 return FALSE;
             }
         }
-        log_message('debug', 'Successfully updated DB for ' . $murmurUserID);
+        log_message('debug', '<' . __FUNCTION__ . '> Successfully updated DB for ' . $murmurUserID);
         return TRUE;
     }
 
@@ -249,16 +289,66 @@ class Pheal_model extends CI_Model {
      * @return bool Successfully get characterID?
      */
     function lookupCharID($charName) {
-        log_message('debug', 'Pheal->CharacterID(): ' . $charName);
+        log_message('debug', '<' . __FUNCTION__ . '> Pheal->CharacterID(): ' . $charName);
         $pheal = new Pheal();
         try {
             $result = $pheal->eveScope->CharacterID(array('names' => $charName));
         } catch (PhealException $exc) {
-            log_message('error', 'Pheal: ' . $exc->getMessage());
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             return FALSE;
         }
         $charID = $result->characters[0]->characterID;
         return $charID;
+    }
+
+    function updateAllianceList() {
+        $this->db->order_by('timestamp', 'DESC');
+        $query = $this->db->get_where('actionLog', array('action' => 'Updated alliance list'));
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $lastCheck = new DateTime($row->timestamp);
+            $date = new DateTime();
+            $hour_ago = $date->sub(new DateInterval('PT1H'));
+            if ($lastCheck > $hour_ago)
+                return TRUE;
+        }
+        $pheal = new Pheal();
+        try {
+            $alliances = $pheal->eveScope->AllianceList();
+        } catch (PhealAPIException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
+            return FALSE;
+        }
+        $alliances = $alliances->alliances;
+        $this->db->trans_start();
+        $this->db->truncate('eveAlliance');
+        log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
+        foreach ($alliances as $alliance) {
+            $insert = array(
+                'allianceID' => $alliance->allianceID,
+                'name' => $alliance->name,
+                'shortName' => $alliance->shortName,
+                'executorCorpID' => $alliance->executorCorpID,
+                'memberCount' => $alliance->memberCount,
+                'startDate' => $alliance->startDate
+            );
+            $this->db->insert('eveAlliance', $insert);
+            log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
+        }
+        $this->db->trans_complete();
+        if ($this->db->trans_status() === FALSE) {
+            log_message('error', '<' . __FUNCTION__ . '> Failed to update alliance list: ' . mysql_error());
+            return FALSE;
+        } else {
+            log_message('debug', '<' . __FUNCTION__ . '> Sucessfully updated alliance list');
+            log_message('debug', '<' . __FUNCTION__ . '> Updating DB action log');
+            $this->db->trans_start();
+            $this->db->insert('actionLog', array('action' => 'Updated alliance list'));
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE)
+                log_message('error', '<' . __FUNCTION__ . '> Failed to update action log');
+            return TRUE;
+        }
     }
 
 }

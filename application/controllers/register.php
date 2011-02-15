@@ -56,19 +56,19 @@ class Register extends CI_Controller {
         $charID = $this->input->post('charid');
         $password = $this->input->post('password');
         if (empty($charID)) {
-            log_message('debug', 'Requesting characters for ' . $userID);
+            log_message('debug', '<' . __FUNCTION__ . '> Requesting characters for ' . $userID);
             $characters = $this->Pheal_model->getCharacters($userID, $apiKey);
             if ($characters) {
-                log_message('debug', 'Got characteres, returning JSON');
+                log_message('debug', '<' . __FUNCTION__ . '> Got characteres, returning JSON');
                 echo json_encode($characters);
             } else {
-                log_message('error', 'Pheal: ' . $this->Pheal_model->errorMessage);
+                log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $this->Pheal_model->errorMessage);
                 echo json_encode(array('type' => 'error', 'message' => $this->Pheal_model->errorMessage));
             }
         } elseif (!empty($charID) && !empty($password)) {
-            log_message('debug', 'Registering user');
-            log_message('info', 'CharID: ' . $charID);
-            log_message('info', 'Password: ' . $password);
+            log_message('debug', '<' . __FUNCTION__ . '> Registering user');
+            log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
+            log_message('info', '<' . __FUNCTION__ . '> Password: ' . $password);
             echo json_encode(array('type' => 'success', 'message' => 'User registered'));
         } else {
             echo json_encode(array('type' => 'error', 'message' => 'No valid character or password'));

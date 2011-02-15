@@ -28,12 +28,12 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', 'Getting registered users on server: ' . $vServerID);
+        log_message('debug', '<' . __FUNCTION__ . '> Getting registered users on server: ' . $vServerID);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $users = $this->server->getRegisteredUsers('');
-        } catch (Exception $exc) {
-            log_message('error', 'Murmur: ' . $exc->getMessage());
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             return NULL;
         }
         return $users;
@@ -50,12 +50,12 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', 'Getting registration for: ' . $murmurUserID);
+        log_message('debug', '<' . __FUNCTION__ . '> Getting registration for: ' . $murmurUserID);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $registration = $this->server->getRegistration($murmurUserID);
-        } catch (Exception $exc) {
-            log_message('error', 'Murmur: ' . $exc->getMessage());
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             return NULL;
         }
         $userInfo = array(
@@ -81,55 +81,35 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', 'Updating registration for: ' . $newUserInfo[0]);
+        log_message('debug', '<' . __FUNCTION__ . '> Updating registration for: ' . $newUserInfo[0]);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->updateRegistration($murmurUserID, $newUserInfo);
-        } catch (Exception $exc) {
-            log_message('error', 'Murmur: ' . $exc->getMessage());
+
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             return FALSE;
         }
         return TRUE;
     }
 
     /**
-     * registerUser - Registers one user on Murmur
-     * 
-     * @param enum $userInfo Enumeration of username, email, comment and hash
-     * @param int $vServerID Murmur Server ID
-     * @return int|bool New Murmur User ID or false if failed
-     */
-    function updateUserInfo($userInfo, $vServerID = NULL) {
-        if (!isset($vServerID)) {
-            $vServerID = $this->config->item('vServerID');
-        }
-        log_message('debug', 'Registering: ' . $newUserInfo[0]);
-        try {
-            $this->server = $this->meta->getServer($vServerID);
-            $murmurUserID = $this->server->registerUser($userInfo);
-        } catch (Exception $exc) {
-            log_message('error', 'Murmur: ' . $exc->getMessage());
-            return FALSE;
-        }
-        return $murmurUserID;
-    }
-
-    /**
-     * unregisterUser - Unregisters one user from Murmur
+     * unregisterUser - Remove one user from Murmur
      *
      * @param int $murmurUserID Murmur User ID
-     * @param int $vServerID Enumeration of username, email, comment and hash
-     * @return bool Was user unregistered successfully?
+     * @param int $vServerID Murmur server ID
+     * @return bool Did user get unregistered successfully?
      */
     function unregisterUser($murmurUserID, $vServerID = NULL) {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
+        log_message('debug', '<' . __FUNCTION__ . '> Unregistering ID: ' . $murmurUserID);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->unregisterUser($murmurUserID);
-        } catch (Exception $exc) {
-            log_message('error', 'Murmur: ' . $exc->getMessage());
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             return FALSE;
         }
         return TRUE;
