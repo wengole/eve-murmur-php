@@ -113,10 +113,11 @@ h4 {
     color:#cccccc;
     cursor:pointer;
     padding:5px 10px 6px 7px; /* Links */
+    width: 100%;
 }
 
 .buttons button{
-    width:auto;
+    width:100%;
     overflow:visible;
     padding:4px 10px 3px 7px; /* IE6 */
 }

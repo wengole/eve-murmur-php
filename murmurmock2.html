@@ -6,8 +6,13 @@
         <title>EVE Murmur API Registration</title>
         <script src="eve-murmur2/js/jquery-1.5.min.js" type="text/javascript" charset="utf-8"></script>
         <script type="text/javascript" charset="utf-8">
+            $.fn.preload = function() {
+                this.each(function(){
+                    $('<img />')[0].src = this;
+                });
+            }
+            $(['http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif']).preload();
             $(document).ready(function() {
-
                 $('#userIdInput').keyup(function(){
                     if(validField('#userIdInput', /^\d{5,}$/)){
                         $('#submitButton').attr('disabled', false);
@@ -98,7 +103,9 @@
                 });
                 $('#inputForm').submit(function(e) {
                     e.preventDefault();
+                    $('#loadingProgress').slideDown(100);
                     $.post($(this).attr("action"), $(this).serialize(), function(data) {
+                        $('#loadingProgress').slideUp('slow');
                         if(data.hasOwnProperty('type')){
                             if(data.type == 'success') {
                                 alert("Success\n" + data.message);
@@ -107,10 +114,9 @@
                             }
                         }
                         if($('#password2').val().length >= 5 && $('#password1').val() == $('#password2').val()){
-
                         } else {
                             $('#submitButton').attr('disabled', true);
-                            $('#charDiv').show('fast');
+                            $('#charDiv').slideDown('slow');
                             $('#charSel').empty();
                             $(data).each(function(i) {
                                 $('#charSel').
@@ -161,7 +167,10 @@
                     <p>Confim Password:</p>
                     <input type="password" class="userinput" name="password2" id="password2">
                 </div>
-                <button name="save" type="submit" class="positive" id="submitButton"><img src="http://www.redskymorning.com/eve-murmur2/images/apply2.png" alt=""/>Submit</button>
+                <div id="loadingProgress" style="display: none;">
+                    <img src="http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
+                </div>
+                <button name="save" type="submit" class="positive" id="submitButton"><!--<img src="http://www.redskymorning.com/eve-murmur2/images/apply2.png" alt=""/>-->Submit</button>
             </div>
         </form>
     </body>
