@@ -57,12 +57,18 @@ h4 {
 
 .invalidinput
 {
-    background-color: #ff9999;
+    background-image: url(../images/exclamation.png);
+    background-repeat: no-repeat;
+    background-position: right center;
+    padding-right: 20px;
 }
 
 .validinput
 {
-    background-color: #99ff99;
+    background-image: url(../images/accept.png);
+    background-repeat: no-repeat;
+    background-position: right center;
+    padding-right: 20px;
 }
 
 #apicontent
