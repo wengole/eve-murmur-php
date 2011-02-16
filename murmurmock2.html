@@ -13,109 +13,55 @@
             }
             $(['http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif']).preload();
             $(document).ready(function() {
-                $('#userIdInput').keyup(function(){
-                    if(validField('#userIdInput', /^\d{5,}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }
-                });
-                $('#userIdInput').mouseup(function(){
-                    if(validField('#userIdInput', /^\d{5,}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }
-                });
-                $('#userIdInput').blur(function(){
-                    if(validField('#userIdInput', /^\d{5,}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }
-                });
-                $('#apiInput').keyup(function(){
-                    if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }
-                });
-                $('#apiInput').mouseup(function(){
-                    if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }                });
-                $('#apiInput').blur(function(){
-                    var key = $.trim($('#apiInput').val());
-                    $('#apiInput').val(key);
-                    if(validField('#apiInput', /^[A-Za-z0-9]{64}$/)){
-                        $('#submitButton').attr('disabled', false);
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }                });
-                $('#password1').keyup(function(){
-                    if(validField('#password1', /^\w{5,}$/)){
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }
-                });
-                $('#password1').mouseup(function(){
-                    if(validField('#password1', /^\w{5,}$/)){
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }                });
-                $('#password1').blur(function(){
-                    if(validField('#password1', /^\w{5,}$/)){
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                    }                });
-                $('#password2').keyup(function(){
-                    $(this).removeClass('invalidinput validinput');
-                    if($(this).val() == $('#password1').val()){
-                        $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
-                    }
-                });
-                $('#password2').mouseup(function(){
-                    $(this).removeClass('invalidinput validinput');
-                    if($(this).val() == $('#password1').val()){
-                        $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
-                    }
-                });
-                $('#password2').blur(function(){
-                    $(this).removeClass('invalidinput validinput');
-                    if($(this).val() == $('#password1').val()){
-                        $('#submitButton').attr('disabled', false);
-                        $(this).addClass('validinput');
-                    } else {
-                        $('#submitButton').attr('disabled', true);
-                        $(this).addClass('invalidinput');
-                    }
-                });
                 $('#inputForm').submit(function(e) {
                     e.preventDefault();
-                    $('#loadingProgress').slideDown(100);
-                    $.post($(this).attr("action"), $(this).serialize(), function(data) {
-                        $('#loadingProgress').slideUp('slow');
-                        if(data.hasOwnProperty('type')){
-                            if(data.type == 'success') {
-                                alert("Success\n" + data.message);
-                            } else {
-                                alert("Error\n" + data.message);
+                    $(':input').removeClass('invalidinput validinput');
+                    $('#validError').hide();
+                    $('#validError').empty();
+                    var uid = $.trim($('#userIdInput').val());
+                    $('#userIdInput').val(uid);
+                    var key = $.trim($('#apiInput').val());
+                    $('#apiInput').val(key);
+                    var validUserID = validField('#userIdInput', /^\d{5,}$/);
+                    var validApiKey = validField('#apiInput', /^[A-Za-z0-9]{64}$/);
+                    var validPassword1 = validField('#password1', /^\w{5,}$/);
+                    var validForm = true;
+                    if(!validUserID) {
+                        $('#userIdInput').addClass('invalidinput');
+                        $('#validError').append('<h4>Invalid UserID<br />Must be at least 5 numerical digits.</h4>');
+                        $('#validError').slideDown('slow');
+                        validForm = false;
+                    }
+                    if(!validApiKey) {
+                        $('#apiInput').addClass('invalidinput');
+                        $('#validError').append('<h4>Invalid API Key<br />Must be exactly 64 characters. Letters and numbers only.</h4>');
+                        $('#validError').slideDown('slow');
+                        validForm = false;
+                    }
+                    if(!validPassword1 && $('#charDiv').is(':visible')) {
+                        $('#password1').addClass('invalidinput');
+                        $('#password2').addClass('invalidinput');
+                        $('#validError').append('<h4>Invalid password<br />Must be at least 5 characters. Letters, numbers and underscore only.</h4>');
+                        $('#validError').slideDown('slow');
+                        validForm = false;
+                    }
+                    if($('#password1').val() != $('#password2').val() && $('#charDiv').is(':visible')) {
+                        $('#password2').addClass('invalidinput');
+                        $('#validError').append('<h4>Passwords don\'t match.</h4>');
+                        $('#validError').slideDown('slow');
+                        validForm = false;
+                    }
+                    if (validForm) {
+                        $('#loadingProgress').slideDown(100);
+                        $.post($(this).attr("action"), $(this).serialize(), function(data) {
+                            $('#loadingProgress').slideUp('slow');
+                            if(data.hasOwnProperty('type')){
+                                if(data.type == 'success') {
+                                    alert("Success\n" + data.message);
+                                } else {
+                                    alert("Error\n" + data.message);
+                                }
                             }
-                        }
-                        if($('#password2').val().length >= 5 && $('#password1').val() == $('#password2').val()){
-                        } else {
-                            $('#submitButton').attr('disabled', true);
                             $('#charDiv').slideDown('slow');
                             $('#charSel').empty();
                             $(data).each(function(i) {
@@ -124,8 +70,8 @@
                                     attr('value',$(this)[0].charid).
                                     text($(this)[0].name));
                             });
-                        }
-                    }, "json");
+                        }, "json");
+                    }
                 });
             });
 
@@ -166,6 +112,8 @@
                     <input type="password" class="userinput" name="password" id="password1">
                     <p>Confim Password:</p>
                     <input type="password" class="userinput" name="password2" id="password2">
+                </div>
+                <div id="validError" style="display: none;">
                 </div>
                 <div id="loadingProgress" style="display: none;">
                     <img src="http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
