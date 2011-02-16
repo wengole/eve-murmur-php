@@ -31,6 +31,9 @@ class Admin extends CI_Controller {
                 if ($userInfo == NULL) {
                     log_message('error', '<' . __FUNCTION__ . '> Failed to get UserInfo for: ' . $username);
                     continue;
+                } elseif(!isset($userInfo['userHash'])) {
+                    log_message('debug','<'.__FUNCTION__.'> User not logged in yet: '.$username);
+                    continue;
                 } else {
                     $this->db->select('eveCorpTicker, eveCharName, eveAllyTicker')->from('eveUser')->where('murmurUserID', $userid);
                     $query = $this->db->get();
