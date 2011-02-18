@@ -62,14 +62,22 @@ class Register extends CI_Controller {
                 log_message('debug', '<' . __FUNCTION__ . '> Got characteres, returning JSON');
                 echo json_encode($characters);
             } else {
-                log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $this->Pheal_model->errorMessage);
+                log_message('error', '<' . __FUNCTION__ . '> ' . $this->Pheal_model->errorMessage);
                 echo json_encode(array('type' => 'error', 'message' => $this->Pheal_model->errorMessage));
             }
         } elseif (!empty($charID) && !empty($password)) {
-            log_message('debug', '<' . __FUNCTION__ . '> Registering user');
+            $name = $this->Pheal_model->lookupCharName($charID);
+            log_message('debug', '<' . __FUNCTION__ . '> Registering user: ' . $name);
             log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
-            log_message('info', '<' . __FUNCTION__ . '> Password: ' . $password);
-            echo json_encode(array('type' => 'success', 'message' => 'User registered'));
+            $userInfo = array();
+            $userInfo['UserName'] = $name;
+            $murmurUserID = $this->Murmur_model->registerUser($userInfo);
+            if (!$murmurUserID) {
+                log_message('error', 'Failed to register: ' . $name);
+                echo json_encode(array('type' => 'error', 'message' => 'Registration failed\n' . $this->Murmur_model->errorMessage));
+            } else {
+                echo json_encode(array('type' => 'success', 'message' => 'User registered'));
+            }
         } else {
             echo json_encode(array('type' => 'error', 'message' => 'No valid character or password'));
         }

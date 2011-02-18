@@ -31,9 +31,6 @@ class Admin extends CI_Controller {
                 if ($userInfo == NULL) {
                     log_message('error', '<' . __FUNCTION__ . '> Failed to get UserInfo for: ' . $username);
                     continue;
-                } elseif (!isset($userInfo['userHash']) || empty($userInfo['userHash'])) {
-                    log_message('debug', '<' . __FUNCTION__ . '> User not logged in yet: ' . $username);
-                    continue;
                 } else {
                     $this->db->select('eveCorpTicker, eveCharName, eveAllyTicker')->from('eveUser')->where('murmurUserID', $userid);
                     $query = $this->db->get();
@@ -49,6 +46,26 @@ class Admin extends CI_Controller {
                         $query = $this->db->get();
                         log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                         $row = $query->row();
+                    }
+                    if (!isset($userInfo['userHash']) || empty($userInfo['userHash'])) {
+                        log_message('debug', '<' . __FUNCTION__ . '> User not logged in yet: ' . $username);
+                        if ($userInfo['username'] != $row->eveCharName) {
+                            log_message('debug', '<' . __FUNCTION__ . '> Resetting username to: ' . $row->eveCharName);
+                            if (!isset($userInfo['userEmail']))
+                                $userInfo['userEmail'] = "";
+                            $newUserInfo = array(
+                                $row->eveCharName,
+                                $userInfo['userEmail'],
+                                $userInfo['userComment'],
+                                $userInfo['userHash']
+                            );
+                            if (!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)) {
+                                log_message('error', '<' . __FUNCTION__ . '> Failed to update registration: ' . $username);
+                            } else {
+                                log_message('debug', '<' . __FUNCTION__ . '> Updated ' . $username . ' to ' . $row->eveCharName);
+                            }
+                        }
+                        continue;
                     }
                     $newUserName = '[' . $row->eveCorpTicker . '] ' . $row->eveCharName;
                     if (isset($row->eveAllyTicker))
@@ -93,7 +110,6 @@ class Admin extends CI_Controller {
                 }
                 continue;
             }
-
             log_message('debug', '<' . __FUNCTION__ . '> Updating: ' . $user->eveCharID);
             $this->Pheal_model->updateUserDetails($user->murmurUserID);
             $query = $this->db->get_where('eveUser', array('murmurUserID' => $user->murmurUserID));
