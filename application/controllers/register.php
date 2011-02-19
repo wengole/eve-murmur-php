@@ -56,7 +56,7 @@ class Register extends CI_Controller {
         $charID = $this->input->post('charid');
         $password = $this->input->post('password');
         if (empty($charID)) {
-            log_message('debug', '<' . __FUNCTION__ . '> Requesting characters for ' . $userID);
+            log_message('info', '<' . __FUNCTION__ . '> Requesting characters for ' . $userID);
             $characters = $this->Pheal_model->getCharacters($userID, $apiKey);
             if ($characters) {
                 log_message('debug', '<' . __FUNCTION__ . '> Got characteres, returning JSON');
@@ -67,7 +67,7 @@ class Register extends CI_Controller {
             }
         } elseif (!empty($charID) && !empty($password)) {
             $name = $this->Pheal_model->lookupCharName($charID);
-            log_message('debug', '<' . __FUNCTION__ . '> Registering user: ' . $name);
+            log_message('info', '<' . __FUNCTION__ . '> Registering user: ' . $name);
             log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
             $userInfo = array();
             $userInfo['UserName'] = $name;
@@ -76,6 +76,7 @@ class Register extends CI_Controller {
                 log_message('error', 'Failed to register: ' . $name);
                 echo json_encode(array('type' => 'error', 'message' => 'Registration failed\n' . $this->Murmur_model->errorMessage));
             } else {
+                log_message('debug', 'Registered: ' . $name);
                 echo json_encode(array('type' => 'success', 'message' => 'User registered'));
             }
         } else {

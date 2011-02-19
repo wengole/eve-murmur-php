@@ -46,7 +46,7 @@ class Pheal_model extends CI_Model {
                 log_message('info', '<' . __FUNCTION__ . '> ...is not blue');
             }
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Returning characters');
+        log_message('info', '<' . __FUNCTION__ . '> Returning characters');
         return $characters;
     }
 
@@ -66,7 +66,7 @@ class Pheal_model extends CI_Model {
             if ($lastCheck > $hour_ago)
                 return TRUE;
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Updating contacts');
+        log_message('info', '<' . __FUNCTION__ . '> Updating contacts');
         $params = array('userid' => $this->config->item('blueUserID'), 'key' => $this->config->item('blueApiKey'));
         $pheal = new Pheal($params);
         try {
@@ -108,7 +108,7 @@ class Pheal_model extends CI_Model {
                 return FALSE;
             }
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Updating DB action log');
+        log_message('info', '<' . __FUNCTION__ . '> Updating DB action log');
         $this->db->trans_start();
         $this->db->insert('actionLog', array('action' => 'Updated blues'));
         $this->db->trans_complete();
@@ -125,7 +125,7 @@ class Pheal_model extends CI_Model {
      */
     function isBlue($charID) {
         if (empty($this->blues)) {
-            log_message('debug', '<' . __FUNCTION__ . '> Loading blues to check characters');
+            log_message('info', '<' . __FUNCTION__ . '> Loading blues to check characters');
             $this->blues = $this->loadBlues();
         }
         $params = array('userid' => NULL, 'key' => NULL, 'scope' => 'account');
@@ -153,7 +153,7 @@ class Pheal_model extends CI_Model {
      * @return Array Array of contactIDs where standing is > 0
      */
     function loadBlues() {
-        log_message('debug', '<' . __FUNCTION__ . '> Loading blues to array');
+        log_message('info', '<' . __FUNCTION__ . '> Loading blues to array');
         $blues = array();
         $this->db->select('contactID')->where('standing >', 0);
         $query = $this->db->get('contact');
@@ -173,7 +173,7 @@ class Pheal_model extends CI_Model {
      */
     function updateUserDetails($murmurUserID = NULL, $eveCharID = NULL) {
         if (isset($murmurUserID) && !isset($eveCharID)) {
-            log_message('debug', '<' . __FUNCTION__ . '> Getting characterID from DB for ' . $murmurUserID);
+            log_message('info', '<' . __FUNCTION__ . '> Getting characterID from DB for ' . $murmurUserID);
             $this->db->select('eveCharID')->from('eveUser')->where('murmurUserID', $murmurUserID);
             $query = $this->db->get();
             $row = $query->row();
@@ -243,7 +243,7 @@ class Pheal_model extends CI_Model {
             $row = $query->row();
             $update['eveAllyTicker'] = $row->shortName;
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Updating DB for ' . $murmurUserID);
+        log_message('info', '<' . __FUNCTION__ . '> Updating DB for ' . $murmurUserID);
         $query = $this->db->get_where('eveUser', array('murmurUserID' => $murmurUserID));
         if ($query->num_rows > 0) {
             $this->db->trans_start();
@@ -355,7 +355,7 @@ class Pheal_model extends CI_Model {
             return FALSE;
         } else {
             log_message('debug', '<' . __FUNCTION__ . '> Sucessfully updated alliance list');
-            log_message('debug', '<' . __FUNCTION__ . '> Updating DB action log');
+            log_message('info', '<' . __FUNCTION__ . '> Updating DB action log');
             $this->db->trans_start();
             $this->db->insert('actionLog', array('action' => 'Updated alliance list'));
             $this->db->trans_complete();

@@ -52,7 +52,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Getting registration for: ' . $murmurUserID);
+        log_message('info', '<' . __FUNCTION__ . '> Getting registration for: ' . $murmurUserID);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $registration = $this->server->getRegistration($murmurUserID);
@@ -84,7 +84,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Updating registration for: ' . $newUserInfo[0]);
+        log_message('info', '<' . __FUNCTION__ . '> Updating registration for: ' . $newUserInfo[0]);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->updateRegistration($murmurUserID, $newUserInfo);
@@ -107,7 +107,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Unregistering ID: ' . $murmurUserID);
+        log_message('info', '<' . __FUNCTION__ . '> Unregistering ID: ' . $murmurUserID);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $this->server->unregisterUser($murmurUserID);
@@ -131,7 +131,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('debug', '<' . __FUNCTION__ . '> Registering: ' . $userInfo['UserName']);
+        log_message('info', '<' . __FUNCTION__ . '> Registering: ' . $userInfo['UserName']);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $murmurUserID = $this->server->registerUser($userInfo);

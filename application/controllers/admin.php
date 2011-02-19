@@ -37,20 +37,21 @@ class Admin extends CI_Controller {
                     log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                     $row = $query->row();
                     if ($query->num_rows() < 1 || !isset($row->eveCorpTicker)) {
-                        log_message('debug', '<' . __FUNCTION__ . '> Updating DB for user: ' . $userid);
+                        log_message('info', '<' . __FUNCTION__ . '> Updating DB for user: ' . $userid);
                         if (!$this->Pheal_model->updateUserDetails($userid)) {
                             log_message('error', '<' . __FUNCTION__ . '> Failed to update eve user: ' . $username);
                             continue;
                         }
+                        log_message('debug', '<' . __FUNCTION__ . '> Updated DB fir user: ' . $userid);
                         $this->db->select('eveCorpTicker, eveCharName, eveAllyTicker')->from('eveUser')->where('murmurUserID', $userid);
                         $query = $this->db->get();
                         log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
                         $row = $query->row();
                     }
                     if (!isset($userInfo['userHash']) || empty($userInfo['userHash'])) {
-                        log_message('debug', '<' . __FUNCTION__ . '> User not logged in yet: ' . $username);
+                        log_message('info', '<' . __FUNCTION__ . '> User not logged in yet: ' . $username);
                         if ($userInfo['username'] != $row->eveCharName) {
-                            log_message('debug', '<' . __FUNCTION__ . '> Resetting username to: ' . $row->eveCharName);
+                            log_message('info', '<' . __FUNCTION__ . '> Resetting username to: ' . $row->eveCharName);
                             if (!isset($userInfo['userEmail']))
                                 $userInfo['userEmail'] = "";
                             $newUserInfo = array(
@@ -100,7 +101,7 @@ class Admin extends CI_Controller {
         $blues = $this->Pheal_model->loadBlues();
         foreach ($users->result() as $user) {
             if ($this->Murmur_model->getUserInfo(intval($user->murmurUserID)) == NULL) {
-                log_message('debug', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' not in DB');
+                log_message('info', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' not in DB');
                 log_message('info', '<' . __FUNCTION__ . '> Deleting from DB: ' . $user->eveCharName);
                 $this->db->trans_start();
                 $this->db->delete('eveUser', array('murmurUserID' => $user->murmurUserID));
@@ -108,6 +109,7 @@ class Admin extends CI_Controller {
                 if ($this->db->trans_status() === FALSE) {
                     log_message('error', '<' . __FUNCTION__ . '> Failed to delete ' . $user->eveCharName . ' from DB');
                 }
+                log_message('debug', '<' . __FUNCTION__ . '> Deleted from DB: ' . $user->eveCharName);
                 continue;
             }
             log_message('debug', '<' . __FUNCTION__ . '> Updating: ' . $user->eveCharID);
@@ -116,12 +118,12 @@ class Admin extends CI_Controller {
             $user = $query->row();
             if (!in_array($user->eveCharID, $blues) && !in_array($user->eveCorpID, $blues) && !in_array($user->eveAllyID, $blues)
                     && $user->eveCorpID != $this->config->item('corpID') && $user->eveAllyID != $this->config->item('allianceID')) {
-                log_message('debug', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' is not blue');
+                log_message('info', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' is not blue');
                 log_message('info', '<' . __FUNCTION__ . '> Unregistering: ' . $user->eveCharName);
                 if (!$this->Murmur_model->unregisterUser(intval($user->murmurUserID))) {
                     log_message('error', '<' . __FUNCTION__ . '> Failed to unregister: ' . $user->eveCharName);
                 } else {
-                    log_message('debug', '<' . __FUNCTION__ . '> Unregistered: ' . $user->eveCharName);
+                    log_message('debug', '<' . __FUNCTION__ . '> Not blue. Unregistered: ' . $user->eveCharName);
                 }
             }
         }
