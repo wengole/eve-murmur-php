@@ -61,14 +61,16 @@ class Murmur_model extends CI_Model {
             $this->errorMessage = $exc->ice_name();
             return NULL;
         }
-        $userInfo = array(
-            'username' => $registration[0],
-            'uesrEmail' => $registration[1],
-            'userComment' => $registration[2],
-            'userHash' => $registration[3],
-            //'userPassword' => $registration[4],
-            'userLastActive' => $registration[5]
-        );
+        $userInfo = array();
+        $userInfo['username'] = $registration[0];
+        if (isset($registration[1]))
+            $userInfo['userEmail'] = $registration[1];
+        if (isset($registration[]))
+            $userInfo['userComment'] = $registration[2];
+        if (isset($registration[3]))
+            $userInfo['userHash'] = $registration[3];
+        if (isset($registration[5]))
+            $userInfo['userLastActive'] = $registration[5];
         return $userInfo;
     }
 

@@ -74,7 +74,7 @@ class Register extends CI_Controller {
             $murmurUserID = $this->Murmur_model->registerUser($userInfo);
             if (!$murmurUserID) {
                 log_message('error', 'Failed to register: ' . $name);
-                echo json_encode(array('type' => 'error', 'message' => 'Registration failed\n' . $this->Murmur_model->errorMessage));
+                echo json_encode(array('type' => 'error', 'message' => 'Registration failed<br />' . $this->Murmur_model->errorMessage));
             } else {
                 log_message('debug', 'Registered: ' . $name);
                 echo json_encode(array('type' => 'success', 'message' => 'User registered'));

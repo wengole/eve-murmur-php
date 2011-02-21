@@ -180,7 +180,7 @@ class Pheal_model extends CI_Model {
             if ($query->num_rows() < 1) {
                 log_message('error', '<' . __FUNCTION__ . '> Murmur User ' . $murmurUserID . ' not in DB');
                 $userInfo = $this->Murmur_model->getUserInfo($murmurUserID);
-                if (preg_match('/^\[.+\]/', $userInfo['username']) > 0) {
+                if (preg_match('/^(\[.+\]|\<.+\>\[.+\])/', $userInfo['username']) > 0) {
                     log_message('debug', '<' . __FUNCTION__ . '> Username has ticker');
                     preg_match_all('/(?<=\]\s).+/', $userInfo['username'], $matches);
                     $charName = $matches[0][0];

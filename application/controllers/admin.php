@@ -42,7 +42,7 @@ class Admin extends CI_Controller {
                             log_message('error', '<' . __FUNCTION__ . '> Failed to update eve user: ' . $username);
                             continue;
                         }
-                        log_message('debug', '<' . __FUNCTION__ . '> Updated DB fir user: ' . $userid);
+                        log_message('debug', '<' . __FUNCTION__ . '> Updated DB for user: ' . $userid);
                         $this->db->select('eveCorpTicker, eveCharName, eveAllyTicker')->from('eveUser')->where('murmurUserID', $userid);
                         $query = $this->db->get();
                         log_message('info', '<' . __FUNCTION__ . '> ' . $this->db->last_query());
@@ -101,7 +101,7 @@ class Admin extends CI_Controller {
         $blues = $this->Pheal_model->loadBlues();
         foreach ($users->result() as $user) {
             if ($this->Murmur_model->getUserInfo(intval($user->murmurUserID)) == NULL) {
-                log_message('info', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' not in DB');
+                log_message('info', '<' . __FUNCTION__ . '> ' . $user->eveCharName . ' not registered');
                 log_message('info', '<' . __FUNCTION__ . '> Deleting from DB: ' . $user->eveCharName);
                 $this->db->trans_start();
                 $this->db->delete('eveUser', array('murmurUserID' => $user->murmurUserID));

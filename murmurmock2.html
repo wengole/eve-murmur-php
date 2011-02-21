@@ -29,12 +29,14 @@
                     if(!validUserID) {
                         $('#userIdInput').addClass('invalidinput');
                         $('#validError').append('<h4>Invalid UserID<br />Must be at least 5 numerical digits.</h4>');
+                        $('#userIdInput').removeAttr('disabled');
                         $('#validError').slideDown('slow');
                         validForm = false;
                     }
                     if(!validApiKey) {
                         $('#apiInput').addClass('invalidinput');
                         $('#validError').append('<h4>Invalid API Key<br />Must be exactly 64 characters. Letters and numbers only.</h4>');
+                        $('#apiInput').removeAttr('disabled');
                         $('#validError').slideDown('slow');
                         validForm = false;
                     }
@@ -55,11 +57,15 @@
                         $('#loadingProgress').slideDown(100);
                         $.post($(this).attr("action"), $(this).serialize(), function(data) {
                             $('#loadingProgress').slideUp('slow');
+                            $('#userIdInput').attr('disabled', 'disabled');
+                            $('#apiInput').attr('disabled', 'disabled');
                             if(data.hasOwnProperty('type')){
                                 if(data.type == 'success') {
-                                    alert("Success\n" + data.message);
+                                    $('#validError').append('<h4>' + data.message);
+                                    $('#validError').slideDown('slow');
                                 } else {
-                                    alert("Error\n" + data.message);
+                                    $('#validError').append('<h4>' + data.message);
+                                    $('#validError').slideDown('slow');
                                 }
                             }
                             $('#charDiv').slideDown('slow');
