@@ -65,7 +65,7 @@ class Murmur_model extends CI_Model {
         $userInfo['username'] = $registration[0];
         if (isset($registration[1]))
             $userInfo['userEmail'] = $registration[1];
-        if (isset($registration[]))
+        if (isset($registration[2]))
             $userInfo['userComment'] = $registration[2];
         if (isset($registration[3]))
             $userInfo['userHash'] = $registration[3];
