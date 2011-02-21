@@ -29,7 +29,7 @@ class Pheal_model extends CI_Model {
         $params = array('userid' => $userID, 'key' => $apiKey, 'scope' => 'account');
         $pheal = new Pheal($params);
         try {
-            log_message('info', '<' . __FUNCTION__ . '> Pheal->Characters()');
+            log_message('info', '<' . __FUNCTION__ . '> Pheal->Characters(): ' . $userID . ':' . $apiKey);
             $result = $pheal->accountScope->Characters();
         } catch (PhealAPIException $exc) {
             log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
