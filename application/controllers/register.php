@@ -45,7 +45,7 @@ class Register extends CI_Controller {
         } elseif (!empty($charID) && !empty($password)) {
             $name = $this->Pheal_model->lookupCharName($charID);
             log_message('info', '<' . __FUNCTION__ . '> Registering user: ' . $name);
-            log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
+            log_message('info', '<' . __FUNCTION__ . '> Password: ' . $password);
             $userInfo = array(
                 $name,
                 null,

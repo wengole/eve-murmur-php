@@ -133,7 +133,7 @@ class Murmur_model extends CI_Model {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
         }
-        log_message('info', '<' . __FUNCTION__ . '> Registering: ' . $userInfo['UserName']);
+        log_message('info', '<' . __FUNCTION__ . '> Registering: ' . $userInfo[0]);
         try {
             $this->server = $this->meta->getServer($vServerID);
             $murmurUserID = $this->server->registerUser($userInfo);
