@@ -48,13 +48,15 @@ class Register extends CI_Controller {
             log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
             $userInfo = array();
             $userInfo['UserName'] = $name;
+            $userInfo['UserPassword'] = $password;
             $murmurUserID = $this->Murmur_model->registerUser($userInfo);
             if (!$murmurUserID) {
-                log_message('error', 'Failed to register: ' . $name);
+                log_message('error', '<' . __FUNCTION__ . '> Failed to register: ' . $name);
                 echo json_encode(array('type' => 'error', 'message' => 'Registration failed<br />' . $this->Murmur_model->errorMessage));
             } else {
-                log_message('debug', 'Registered: ' . $name);
+                log_message('debug', '<' . __FUNCTION__ . '> Registered: ' . $name);
                 $url = 'mumble://' . str_replace(".", "%2E", rawurlencode($name)) . ':' . $password . '@' . $this->Murmur_model->createURL();
+                log_message('info', '<' . __FUNCTION__ . '> URL: ' . $url);
                 echo json_encode(array('type' => 'success', 'message' => $url));
             }
         } else {

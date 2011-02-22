@@ -298,13 +298,13 @@ class Pheal_model extends CI_Model {
         $pheal = new Pheal();
         try {
             log_message('info', '<' . __FUNCTION__ . '> Pheal->CharacterName(): ' . $charID);
-            $result = $pheal->eveScope->CharacterName(array('ids' => $charID));
+            $result = $pheal->eveScope->CharacterInfo(array('characterID' => $charID));
         } catch (PhealAPIException $exc) {
             log_message('error', '<' . __FUNCTION__ . '> Pheal: ' . $exc->getMessage());
             $this->errorMessage = $exc->getMessage();
             return FALSE;
         }
-        $charID = $result->characters[0]->name;
+        $charID = $result->characterName;
         return $charID;
     }
 
