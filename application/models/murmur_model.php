@@ -145,6 +145,23 @@ class Murmur_model extends CI_Model {
         return $murmurUserID;
     }
 
+    function createURL($vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('info', '<' . __FUNCTION__ . '> Building connection URL');
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $host = $this->server->getConf('host');
+            $port = $this->server->getConf('port');
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
+            $this->errorMessage = $exc->ice_name();
+        }
+        $url = $host . ':' . $port . '/?version=1.2.0';
+        return $url;
+    }
+
 }
 
 ?>

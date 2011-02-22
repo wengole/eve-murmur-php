@@ -14,40 +14,17 @@ class Register extends CI_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->helper(array('html'));
+        $this->load->helper(array('html', 'url'));
         $this->load->model(array('Pheal_model', 'Murmur_model'));
     }
 
     function index() {
-        echo "Work in progress!";
-//        $title['title'] = 'Mumble Registration';
-//        if ($this->form_validation->run('register1') == FALSE) {
-//            $this->load->view('includes/html_head', $title);
-//            $this->load->view('register/form_1');
-//            $this->load->view('register/form_close');
-//            $this->load->view('includes/html_foot');
-//        } elseif ($this->form_validation->run('register2') == FALSE) {
-//            $this->User->getCharacters($this->input->post('userid'), $this->input->post('apikey'));
-//            // If API is OK show the character selection, else show API request
-//            if ($characters != FALSE) {
-//                $this->load->view('includes/html_head', $title);
-//                $this->load->view('register/form_1');
-//                $this->load->view('register/form_2', $characters);
-//                $this->load->view('register/form_close');
-//                $this->load->view('includes/html_foot');
-//            } else {
-//                $this->load->view('includes/html_head', $title);
-//                $this->load->view('register/form_1');
-//                $this->load->view('register/form_close');
-//                $this->load->view('includes/html_foot');
-//            }
-//        } else {
-//            // TODO: _getdata to populate registered view
-//            // Do this in the if statement
-//            $this->load->view('includes/html_head', $title);
-//            $this->load->view('register/registered');
-//            $this->load->view('includes/html_foot');
-//        }
+        $title = array('title' => 'EVE Murmur API Registration');
+        $this->load->view('includes/html_head', $title);
+        $this->load->view('includes/header');
+        $this->load->view('register/registerview');
+        $this->load->view('includes/footer');
+        $this->load->view('includes/html_foot');
     }
 
     function submit() {
@@ -77,7 +54,8 @@ class Register extends CI_Controller {
                 echo json_encode(array('type' => 'error', 'message' => 'Registration failed<br />' . $this->Murmur_model->errorMessage));
             } else {
                 log_message('debug', 'Registered: ' . $name);
-                echo json_encode(array('type' => 'success', 'message' => 'User registered'));
+                $url = 'mumble://' . str_replace(".", "%2E", rawurlencode($name)) . ':' . $password . '@' . $this->Murmur_model->createURL();
+                echo json_encode(array('type' => 'success', 'message' => $url));
             }
         } else {
             echo json_encode(array('type' => 'error', 'message' => 'No valid character or password'));

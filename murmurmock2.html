@@ -3,8 +3,10 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html" />
         <link href="eve-murmur2/css/apipagecssr2.css" rel="stylesheet" type="text/css" />
+        <link href="eve-murmur2/css/jquery-ui-1.8.9.custom.css" rel="stylesheet" type="text/css" />
         <title>EVE Murmur API Registration</title>
         <script src="eve-murmur2/js/jquery-1.5.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="eve-murmur2/js/jquery-ui-1.8.9.custom.min.js" type="text/javascript" charset="utf-8"></script>
         <script type="text/javascript" charset="utf-8">
             $.fn.preload = function() {
                 this.each(function(){
@@ -13,6 +15,9 @@
             }
             $(['http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif']).preload();
             $(document).ready(function() {
+                $('#submitButton').button();
+                $('#dialog').dialog({ autoOpen: false,
+                    close: function() {window.location.reload()} });
                 $('#inputForm').submit(function(e) {
                     e.preventDefault();
                     $(':input').removeClass('invalidinput validinput');
@@ -28,14 +33,26 @@
                     var validForm = true;
                     if(!validUserID) {
                         $('#userIdInput').addClass('invalidinput');
-                        $('#validError').append('<h4>Invalid UserID<br />Must be at least 5 numerical digits.</h4>');
+                        $('#validError').append($('<div><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>\n\
+                                <strong>Invalid UserID</strong><br />Must be at least 5 numerical digits.</div>').
+                            attr({
+                            'class': 'ui-state-error ui-corner-all',
+                            style: 'padding: .7em .7em'
+                        }));
+                        $('#validError').append('<br />');
                         $('#userIdInput').removeAttr('disabled');
                         $('#validError').slideDown('slow');
                         validForm = false;
                     }
                     if(!validApiKey) {
                         $('#apiInput').addClass('invalidinput');
-                        $('#validError').append('<h4>Invalid API Key<br />Must be exactly 64 characters. Letters and numbers only.</h4>');
+                        $('#validError').append($('<div><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>\n\
+                                <strong>Invalid API Key</strong><br />Must be exactly 64 characters. Letters and numbers only.</div>').
+                            attr({
+                            'class': 'ui-state-error ui-corner-all',
+                            style: 'padding: .7em .7em'
+                        }));
+                        $('#validError').append('<br />');
                         $('#apiInput').removeAttr('disabled');
                         $('#validError').slideDown('slow');
                         validForm = false;
@@ -43,13 +60,25 @@
                     if(!validPassword1 && $('#charDiv').is(':visible')) {
                         $('#password1').addClass('invalidinput');
                         $('#password2').addClass('invalidinput');
-                        $('#validError').append('<h4>Invalid password<br />Must be at least 5 characters. Letters, numbers and underscore only.</h4>');
+                        $('#validError').append($('<div><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>\n\
+                                <strong>Invalid password</strong><br />Must be at least 5 characters. Letters, numbers and underscore only.</div>').
+                            attr({
+                            'class': 'ui-state-error ui-corner-all',
+                            style: 'padding: .7em .7em'
+                        }));
+                        $('#validError').append('<br />');
                         $('#validError').slideDown('slow');
                         validForm = false;
                     }
                     if($('#password1').val() != $('#password2').val() && $('#charDiv').is(':visible')) {
                         $('#password2').addClass('invalidinput');
-                        $('#validError').append('<h4>Passwords don\'t match.</h4>');
+                        $('#validError').append($('<div><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>\n\
+                                <strong>Passwords don\'t match.<strong></div>').
+                            attr({
+                            'class': 'ui-state-error ui-corner-all',
+                            style: 'padding: .7em .7em'
+                        }));
+                        $('#validError').append('<br />');
                         $('#validError').slideDown('slow');
                         validForm = false;
                     }
@@ -61,10 +90,20 @@
                             $('#apiInput').attr('disabled', 'disabled');
                             if(data.hasOwnProperty('type')){
                                 if(data.type == 'success') {
-                                    $('#validError').append('<h4>' + data.message);
-                                    $('#validError').slideDown('slow');
+                                    html = '<p>Click <a href=' + data.message + '>here</a> once you have Mumble installed</p>\n\
+                                        <p>Once connected go to Server->Connect, hit Add New..., give it a label (e.g. Comms) then \n\
+                                        click OK to save the connection as a favourite</p><p>Your corp ticker will be prepended to your \n\
+                                        username automatically within 5 minutes and will take effect next time you login</p>';
+                                    $('#dialog').append(html);
+                                    $('#dialog').dialog('open');
                                 } else {
-                                    $('#validError').append('<h4>' + data.message);
+                                    $('#validError').append($('<div><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>\n\
+                                            <strong>' + data.message + '</strong></div>').
+                                        attr({
+                                        'class': 'ui-state-error ui-corner-all',
+                                        style: 'padding: .7em .7em'
+                                    }));
+                                    $('#validError').append('<br />');
                                     $('#validError').slideDown('slow');
                                 }
                             }
@@ -104,12 +143,22 @@
         <form name="input" id="inputForm" action="http://www.redskymorning.com/eve-murmur2/register/submit">
             <div id="apicontent">
                 <h1>Mumble Registration</h1>
-                <p>1. <a href="http://mumble.sourceforge.net" target="_blank">Download Mumble</a></p>
-                <p>2. <a href="http://www.eveonline.com/api/" target="_blank">Get your limited API Key</a></p>
+
+                <div class="ui-state-highlight ui-corner-all" style="padding: 0 0 .7em .7em;">
+                    <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><a href="http://mumble.sourceforge.net" target="_blank">Download Mumble</a></p>
+                </div>
+                <br />
+
+                <div class="ui-state-highlight ui-corner-all" style="padding: 0 0 .7em .7em;">
+                    <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><a href="http://www.eveonline.com/api/" target="_blank">Get your limited API Key</a></p>
+                </div>
+
                 <p>User ID:</p>
                 <input type="text" class="userinput" name="userid" id="userIdInput">
+
                 <p>Limited API:</p>
                 <input type="text" class="userinput" name="apikey" id="apiInput">
+
                 <div id="charDiv" style="display: none;">
                     <p>Character: </p>
                     <select class="userselect" name="charid" id="charSel">
@@ -119,13 +168,21 @@
                     <p>Confim Password:</p>
                     <input type="password" class="userinput" name="password2" id="password2">
                 </div>
+
+                <p></p>
+
                 <div id="validError" style="display: none;">
                 </div>
+
                 <div id="loadingProgress" style="display: none;">
                     <img src="http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
                 </div>
-                <button name="save" type="submit" class="positive" id="submitButton"><!--<img src="http://www.redskymorning.com/eve-murmur2/images/apply2.png" alt=""/>-->Submit</button>
+                <button name="save" type="submit" id="submitButton">Submit</button>
             </div>
+
+            <div id="dialog" title="Registration successful">
+            </div>
+
         </form>
     </body>
 </html>

@@ -68,9 +68,10 @@ class Admin extends CI_Controller {
                         }
                         continue;
                     }
-                    $newUserName = '[' . $row->eveCorpTicker . '] ' . $row->eveCharName;
+                    $newUserName = $row->eveCharName . ' ';
                     if (isset($row->eveAllyTicker))
-                        $newUserName = '<' . $row->eveAllyTicker . '>' . $newUserName;
+                        $newUserName = $newUserName . '<' . $row->eveAllyTicker . '>';
+                    $newUserName = $newUserName . '[' . $row->eveCorpTicker . ']';
                     log_message('info', '<' . __FUNCTION__ . '> New Username: ' . $newUserName);
                     log_message('info', '<' . __FUNCTION__ . '> Old Username: ' . $userInfo['username']);
                     if ($newUserName != $userInfo['username']) {
