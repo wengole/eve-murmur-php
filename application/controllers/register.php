@@ -46,9 +46,13 @@ class Register extends CI_Controller {
             $name = $this->Pheal_model->lookupCharName($charID);
             log_message('info', '<' . __FUNCTION__ . '> Registering user: ' . $name);
             log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
-            $userInfo = array();
-            $userInfo['UserName'] = $name;
-            $userInfo['UserPassword'] = $password;
+            $userInfo = array(
+                $name,
+                null,
+                null,
+                null,
+                $password
+            );
             $murmurUserID = $this->Murmur_model->registerUser($userInfo);
             if (!$murmurUserID) {
                 log_message('error', '<' . __FUNCTION__ . '> Failed to register: ' . $name);
