@@ -3,3 +3,9 @@
 /old-index.php/application/libraries/pheal/.gitignore
 /application/libraries/pheal/README.md
 /application/libraries/pheal/.gitignore
+.buildpath
+.project
+.settings/
+application/.buildpath
+application/.project
+application/.settings/
