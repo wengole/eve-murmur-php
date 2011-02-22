@@ -55,6 +55,22 @@ h4 {
     font-size: 1.5em;
 }
 
+.invalidinput
+{
+    background-image: url(../images/exclamation.png);
+    background-repeat: no-repeat;
+    background-position: right center;
+    padding-right: 20px;
+}
+
+.validinput
+{
+    background-image: url(../images/accept.png);
+    background-repeat: no-repeat;
+    background-position: right center;
+    padding-right: 20px;
+}
+
 #apicontent
 {
     padding-left: 10px;
@@ -97,10 +113,11 @@ h4 {
     color:#cccccc;
     cursor:pointer;
     padding:5px 10px 6px 7px; /* Links */
+    width: 100%;
 }
 
 .buttons button{
-    width:auto;
+    width:100%;
     overflow:visible;
     padding:4px 10px 3px 7px; /* IE6 */
 }

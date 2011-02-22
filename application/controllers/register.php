@@ -3,74 +3,63 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
-require_once 'Ice.php';
-require_once APPPATH . 'libraries/Murmur_1.2.2.php';
-
-class Register extends Controller {
+/**
+ * Register - Shows basic EvE API registration form and processes Mumble registration
+ *
+ * @author Ben Cole <wengole@gmail.com>
+ * @property Pheal_model $Pheal_model
+ * @property Murmur_model $Murmur_model
+ */
+class Register extends CI_Controller {
 
     function __construct() {
-        parent::Controller();
-        $this->load->helper(array('html', 'form'));
-        $this->load->model('Registration');
+        parent::__construct();
+        $this->load->helper(array('html', 'url'));
+        $this->load->model(array('Pheal_model', 'Murmur_model'));
     }
 
     function index() {
-        $data['main_content'] = 'registerview';
-        $data['title'] = 'Mumble Registration';
-        $data['data'] = $this->_getData();
-        $this->load->view('includes/template', $data);
+        $title = array('title' => 'EVE Murmur API Registration');
+        $this->load->view('includes/html_head', $title);
+        $this->load->view('includes/header');
+        $this->load->view('register/registerview');
+        $this->load->view('includes/footer');
+        $this->load->view('includes/html_foot');
     }
 
-    function add() {
-        $this->Registration->setUserID(trim($this->input->post('userid')));
-        $this->Registration->setApikey(trim($this->input->post('apikey')));
-        $this->Registration->setSelectedUser($this->input->post('username'));
-        $userID = $this->Registration->getUserID();
-        $apiKey = $this->Registration->getApiKey();
-        if ($this->input->post('apikey') != $this->Registration->getApiKey() || $this->input->post('userid') != $this->Registration->getUserID()
-                || (empty($unameArray) && !empty($userID) && !empty($apiKey))) {
-            $this->Registration->populateCharacters();
-            $unameArray = $this->Registration->getUnameArray();
-        }
-        if (!empty($unameArray)) {
-            $this->Registration->setUsername($this->Registration->getSelectedUser());
-        }
-        $this->Registration->setPassword($this->input->post('password'));
-        $this->Registration->setPassword2($this->input->post('password2'));
-        if (preg_match("/^[A-Za-z0-9-._]*\z/", $this->Registration->getPassword()) && $this->Registration->getPassword() != ""
-                && $this->Registration->getPassword() == $this->Registration->getPassword2()) {
-            $this->Registration->registerUser();
-            $data['title'] = 'Mumble Registration';
-            $data['data'] = $this->_getData();
-            if (!empty($data['data']['errorMessage'])) {
-                $data['main_content'] = 'registerview';
+    function submit() {
+        $userID = $this->input->post('userid');
+        $apiKey = $this->input->post('apikey');
+        $charID = $this->input->post('charid');
+        $password = $this->input->post('password');
+        if (empty($charID)) {
+            log_message('info', '<' . __FUNCTION__ . '> Requesting characters for ' . $userID);
+            $characters = $this->Pheal_model->getCharacters($userID, $apiKey);
+            if ($characters) {
+                log_message('debug', '<' . __FUNCTION__ . '> Got characteres, returning JSON');
+                echo json_encode($characters);
             } else {
-                $data['main_content'] = 'registeredview';
+                log_message('error', '<' . __FUNCTION__ . '> ' . $this->Pheal_model->errorMessage);
+                echo json_encode(array('type' => 'error', 'message' => $this->Pheal_model->errorMessage));
             }
-            $this->load->view('includes/template', $data);
+        } elseif (!empty($charID) && !empty($password)) {
+            $name = $this->Pheal_model->lookupCharName($charID);
+            log_message('info', '<' . __FUNCTION__ . '> Registering user: ' . $name);
+            log_message('info', '<' . __FUNCTION__ . '> CharID: ' . $charID);
+            $userInfo = array();
+            $userInfo['UserName'] = $name;
+            $murmurUserID = $this->Murmur_model->registerUser($userInfo);
+            if (!$murmurUserID) {
+                log_message('error', 'Failed to register: ' . $name);
+                echo json_encode(array('type' => 'error', 'message' => 'Registration failed<br />' . $this->Murmur_model->errorMessage));
+            } else {
+                log_message('debug', 'Registered: ' . $name);
+                $url = 'mumble://' . str_replace(".", "%2E", rawurlencode($name)) . ':' . $password . '@' . $this->Murmur_model->createURL();
+                echo json_encode(array('type' => 'success', 'message' => $url));
+            }
         } else {
-            $data['main_content'] = 'registerview';
-            $data['title'] = 'Mumble Registration';
-            $data['data'] = $this->_getData();
-            $this->load->view('includes/template', $data);
+            echo json_encode(array('type' => 'error', 'message' => 'No valid character or password'));
         }
-    }
-
-    function _getData() {
-        $data = array(
-            'userID' => $this->Registration->getUserID(),
-            'apiKey' => $this->Registration->getApiKey(),
-            'unameArray' => $this->Registration->getUnameArray(),
-            'selectedUser' => $this->Registration->getSelectedUser(),
-            'username' => $this->Registration->getUsername(),
-            'password' => $this->Registration->getPassword(),
-            'password2' => $this->Registration->getPassword2(),
-            'errorMessage' => $this->Registration->getErrorMessage(),
-            'host' => $this->Registration->getHost(),
-            'port' => $this->Registration->getPort(),
-            'successMessage' => $this->Registration->getSuccessMessage()
-        );
-        return $data;
     }
 
 }
