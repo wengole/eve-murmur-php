@@ -4,9 +4,18 @@
             $('<img />')[0].src = this;
         });
     }
-    $(['http://www.redskymorning.com/eve-murmur2/images/ajax-loader.gif']).preload();
+    $(['<?= base_url() ?>images/ajax-loader.gif']).preload();
     $(document).ready(function() {
         $('#submitButton').button();
+        $('#resetButton').button();
+        $('#resetButton').click(function(){
+            //window.location.reload();
+            $(':input').removeClass('invalidinput validinput');
+            $('#charDiv').slideUp('slow');
+            $('#validError').slideUp('slow');
+            $('#userIdInput').val('');
+            $('#apiInput').val('');
+        });
         $('#dialog').dialog({ autoOpen: false,
             close: function() {window.location.reload()} });
         $('#inputForm').submit(function(e) {
@@ -98,6 +107,8 @@
                                                                         $('#validError').slideDown('slow');
                                                                     }
                                                                 }
+                                                                $('#password1').removeClass('invalidinput validinput');
+                                                                $('#password2').removeClass('invalidinput validinput');
                                                                 $('#charDiv').slideDown('slow');
                                                                 $('#charSel').empty();
                                                                 $(data).each(function(i) {
@@ -164,9 +175,10 @@
         </div>
 
         <div id="loadingProgress" style="display: none;">
-            <img src="<?=base_url() ?>images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
+            <img src="<?= base_url() ?>images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
         </div>
-        <button name="save" type="submit" id="submitButton">Submit</button>
+        <button name="save" type="submit" id="submitButton" style="align: left;">Submit</button>
+        <button name="reset" type="button"id="resetButton" style="align: right;">Reset</button>
     </div>
 
     <div id="dialog" title="Registration successful">
