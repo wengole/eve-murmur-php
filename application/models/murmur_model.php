@@ -145,6 +145,12 @@ class Murmur_model extends CI_Model {
         return $murmurUserID;
     }
 
+    /**
+     * createURL - Builds connection URL after the username:password
+     *
+     * @param int $vServerID Murmur server ID
+     * @return string Part of URL
+     */
     function createURL($vServerID = NULL) {
         if (!isset($vServerID)) {
             $vServerID = $this->config->item('vServerID');
@@ -157,9 +163,73 @@ class Murmur_model extends CI_Model {
         } catch (Murmur_MurmurException $exc) {
             log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             $this->errorMessage = $exc->ice_name();
+            return FALSE;
         }
         $url = $host . ':' . $port . '/?version=1.2.0';
         return $url;
+    }
+
+    /**
+     * authenticateUser - Authenticate user based on their credentials stored in Murmur
+     * 
+     * @param string $username User name
+     * @param string $password User password
+     * @param int $vServerID Murmur server ID
+     * @return bool Successful authentication?
+     */
+    function authenticateUser($username, $password, $vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('info', 'Authenticating user: ' . $username);
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $murmurUserID = $this->server->verifyPassword($username, $password);
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
+            $this->errorMessage = $exc->ice_name();
+            return FALSE;
+        }
+        if ($murmurUserID == -1)
+            $this->errorMessage = "Incorrect Password";
+        if ($murmurUserID == -2)
+            $this->errorMessage = "Unknown User";
+        if ($murmurUserID < 0)
+            return FALSE;
+        return TRUE;
+    }
+
+    /**
+     * getGroupMembers - Fetches array of group members from Murmur
+     * 
+     * @param string $groupName Name of the group to get members of
+     * @param int $channelID Channel ID. Defaults to 0 for root
+     * @param int $vServerID Murmur server ID
+     * @return array|null Array of group members or NULL if groupName not found 
+     */
+    function getGroupMembers($groupName, $channelID = 0, $vServerID = NULL) {
+        if (!isset($vServerID)) {
+            $vServerID = $this->config->item('vServerID');
+        }
+        log_message('info', 'Getting group members for: ' . $groupName);
+        $acls = array();
+        $groups = array();
+        $inherit = FALSE;
+        try {
+            $this->server = $this->meta->getServer($vServerID);
+            $this->server->getACL($channelID, &$acls, &$groups, &$inherit);
+        } catch (Murmur_MurmurException $exc) {
+            log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
+            $this->errorMessage = $exc->ice_name();
+            return FALSE;
+        }
+        $members = NULL;
+        foreach ($groups as $group) {
+            if ($group->name != $groupName)
+                continue;
+            $members = $group->members;
+        }
+        return $members;
     }
 
 }

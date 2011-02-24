@@ -177,8 +177,8 @@
         <div id="loadingProgress" style="display: none;">
             <img src="<?= base_url() ?>images/ajax-loader.gif" alt="loading..." style="display: block; margin-left: auto; margin-right: auto;" />
         </div>
-        <button name="save" type="submit" id="submitButton" style="align: left;">Submit</button>
-        <button name="reset" type="button"id="resetButton" style="align: right;">Reset</button>
+        <button name="save" type="submit" id="submitButton">Submit</button>
+        <button name="reset" type="button"id="resetButton">Reset</button>
     </div>
 
     <div id="dialog" title="Registration successful">
