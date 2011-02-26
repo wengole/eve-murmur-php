@@ -9,12 +9,10 @@
         $('#submitButton').button();
         $('#resetButton').button();
         $('#resetButton').click(function(){
-            //window.location.reload();
             $(':input').removeClass('invalidinput validinput');
             $('#charDiv').slideUp('slow');
             $('#validError').slideUp('slow');
-            $('#userIdInput').val('');
-            $('#apiInput').val('');
+            $(':input').val('');
         });
         $('#dialog').dialog({ autoOpen: false,
             close: function() {window.location.reload()},
