@@ -22,7 +22,7 @@ class Register extends CI_Controller {
         $title = array('title' => 'EVE Murmur API Registration');
         $this->load->view('includes/html_head', $title);
         $this->load->view('includes/header');
-        $this->load->view('register/registerview');
+        $this->load->view('registerview');
         $this->load->view('includes/footer');
         $this->load->view('includes/html_foot');
     }
