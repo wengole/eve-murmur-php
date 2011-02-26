@@ -217,7 +217,7 @@ class Murmur_model extends CI_Model {
         $inherit = FALSE;
         try {
             $this->server = $this->meta->getServer($vServerID);
-            $this->server->getACL($channelID, &$acls, $groups, $inherit);
+            $this->server->getACL($channelID, $acls, $groups, $inherit);
         } catch (Murmur_MurmurException $exc) {
             log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
             $this->errorMessage = $exc->ice_name();
