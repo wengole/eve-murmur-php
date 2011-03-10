@@ -52,20 +52,12 @@ class Admin extends CI_Controller {
                         log_message('info', '<' . __FUNCTION__ . '> User not logged in yet: ' . $username);
                         if ($userInfo['username'] != $row->eveCharName) {
                             log_message('info', '<' . __FUNCTION__ . '> Resetting username to: ' . $row->eveCharName);
-                            $newUserInfo = array();
+                            $newUserInfo = $userInfo;
                             $newUserInfo['username'] = $row->eveCharName;
-                            if (isset($userInfo[1]))
-                                $userInfo['userEmail'] = $registration['userEmail'];
-                            if (isset($userInfo[2]))
-                                $userInfo['userComment'] = $registration['userComment'];
-                            if (isset($userInfo[3]))
-                                $userInfo['userHash'] = $registration['userHash'];
-                            if (isset($userInfo[5]))
-                                $userInfo['userLastActive'] = $registration['userLastActive'];
                             if (!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)) {
-                                log_message('error', '<' . __FUNCTION__ . '> Failed to update registration: ' . $username);
+                                log_message('error', '<' . __FUNCTION__ . '> Failed to reset username: ' . $row->eveCharName . ' - ' . $this->Murmur_model->errorMessage);
                             } else {
-                                log_message('debug', '<' . __FUNCTION__ . '> Updated ' . $username . ' to ' . $row->eveCharName);
+                                log_message('debug', '<' . __FUNCTION__ . '> Reset ' . $username . ' to ' . $row->eveCharName);
                             }
                         }
                         continue;
@@ -78,7 +70,11 @@ class Admin extends CI_Controller {
                     log_message('info', '<' . __FUNCTION__ . '> Old Username: ' . $userInfo['username']);
                     if ($newUserName != $userInfo['username']) {
                         if (!isset($userInfo['userEmail']))
-                            $userInfo['userEmail'] = "";
+                            $userInfo['userEmail'] = '';
+                        if (!isset($userInfo['userComment']))
+                            $userInfo['userComment'] = '';
+                        if (!isset($userInfo['userHash']))
+                            $userInfo['userHash'] = '';
                         $newUserInfo = array(
                             $newUserName,
                             $userInfo['userEmail'],
@@ -86,7 +82,7 @@ class Admin extends CI_Controller {
                             $userInfo['userHash']
                         );
                         if (!$this->Murmur_model->updateUserInfo($userid, $newUserInfo)) {
-                            log_message('error', '<' . __FUNCTION__ . '> Failed to update registration: ' . $username);
+                            log_message('error', '<' . __FUNCTION__ . '> Failed to update registration: ' . $userid . ' - ' . $newUserName . ' - ' . $this->Murmur_model->errorMessage);
                         } else {
                             log_message('debug', '<' . __FUNCTION__ . '> Updated ' . $username . ' to ' . $newUserName);
                         }
