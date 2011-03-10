@@ -56,6 +56,8 @@ class Register extends CI_Controller {
             $murmurUserID = $this->Murmur_model->registerUser($userInfo);
             if (!$murmurUserID) {
                 log_message('error', '<' . __FUNCTION__ . '> Failed to register: ' . $name);
+                if($this->Murmur_model->errorMessage == "Murmur::InvalidUserException")
+                    $this->Murmur_model->errorMessage = "You are already registered.";
                 echo json_encode(array('type' => 'error', 'message' => 'Registration failed<br />' . $this->Murmur_model->errorMessage));
             } else {
                 log_message('debug', '<' . __FUNCTION__ . '> Registered: ' . $name);

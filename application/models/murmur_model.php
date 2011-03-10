@@ -6,9 +6,9 @@
  */
 class Murmur_model extends CI_Model {
 
-    var $meta;
-    var $server;
-    var $errorMessage;
+    private $meta;
+    private $server;
+    public $errorMessage;
 
     function __construct() {
         parent::__construct();
