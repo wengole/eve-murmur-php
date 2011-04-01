@@ -135,12 +135,13 @@ class Murmur_model extends CI_Model {
         }
         log_message('info', '<' . __FUNCTION__ . '> Registering: ' . $userInfo[0]);
         try {
+            $this->server = $this->meta->getServer($vServerID);
+            log_message('info', '<' . __FUNCTION__ . '> Checking for existing user');
             $regUsers = $this->server->getRegisteredUsers('');
             foreach ($regUsers as $userID => $username) {
                 if (preg_match('/.*' . $userInfo[0] . '.*/', $username))
                     throw new Murmur_InvalidUserException;
             }
-            $this->server = $this->meta->getServer($vServerID);
             $murmurUserID = $this->server->registerUser($userInfo);
         } catch (Murmur_MurmurException $exc) {
             log_message('error', '<' . __FUNCTION__ . '> Murmur: ' . $exc->ice_name());
