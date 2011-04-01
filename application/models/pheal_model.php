@@ -320,7 +320,7 @@ class Pheal_model extends CI_Model {
             $row = $query->row();
             $lastCheck = new DateTime($row->timestamp);
             $date = new DateTime();
-            $hour_ago = $date->sub(new DateInterval('PT1H'));
+            $date->modify('-1 hour');
             if ($lastCheck > $hour_ago)
                 return TRUE;
         }
