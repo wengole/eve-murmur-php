@@ -321,7 +321,7 @@ class Pheal_model extends CI_Model {
             $lastCheck = new DateTime($row->timestamp);
             $date = new DateTime();
             $date->modify('-1 hour');
-            if ($lastCheck > $hour_ago)
+            if ($lastCheck > $date)
                 return TRUE;
         }
         $pheal = new Pheal();
